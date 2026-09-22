@@ -28,6 +28,13 @@
       return;
     }
 
+    if (legend.toggle) {
+      legend.selected = !legend.selected;
+      legend.onClick(legend);
+      legends = legends;
+      return;
+    }
+
     legend.onClick(legend);
     if (selectedLegend == legend) {
       // toggle
@@ -39,14 +46,28 @@
       selectedLegend = legend;
     }
   }
+
+  function onKeydown(event: KeyboardEvent, legend: Legend) {
+    if (event.key == "Enter" || event.key == " ") {
+      event.preventDefault();
+      onClick(legend);
+    }
+  }
 </script>
 
 <div class="flex justify-start gap-0 {clazz}">
   {#each legends as legend}
+    <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
     <div
-      class="flex flex-col p-1.5 gap-2 legend-box {legend.onClick && 'cursor-pointer'}"
-      on:click={(_e) => onClick(legend)}
-      class:selected={selectedLegend == legend}
+      class="flex flex-col p-1.5 gap-2 legend-box"
+      class:cursor-pointer={!!legend.onClick}
+      class:inactive={legend.toggle && legend.selected === false}
+      on:click={() => onClick(legend)}
+      on:keydown={(event) => onKeydown(event, legend)}
+      class:selected={!legend.toggle && selectedLegend == legend}
+      role={legend.onClick ? "button" : undefined}
+      tabindex={legend.onClick ? 0 : undefined}
+      aria-pressed={legend.toggle ? legend.selected : undefined}
     >
       {#if legend.texture}
         <svg

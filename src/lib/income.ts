@@ -14,6 +14,9 @@ import {
   type Legend
 } from "./utils";
 import { generateColorScheme } from "./colors";
+import { incomeTimelineDomain } from "./income_scale";
+
+export { incomeTimelineDomain } from "./income_scale";
 
 export function renderMonthlyInvestmentTimeline(incomes: Income[]): Legend[] {
   return renderIncomeTimeline(incomes, "#d3-income-timeline", "MMM-YYYY");
@@ -78,100 +81,114 @@ function renderIncomeTimeline(incomes: Income[], id: string, timeFormat: string)
 
   const x = d3.scaleBand().range([0, width]).paddingInner(0.1).paddingOuter(0);
   const y = d3.scaleLinear().range([height, 0]);
-
-  const sum = (filter: (n: number) => boolean) => (p: Point) =>
-    _.sum(
-      _.filter(
-        _.map(groupKeys, (k) => p[k]),
-        filter
-      )
-    );
-  x.domain(points.map((p) => p.month));
-  y.domain([
-    d3.min(
-      points,
-      sum((a) => a < 0)
-    ),
-    d3.max(
-      points,
-      sum((a) => a > 0)
-    )
-  ]);
-
   const z = generateColorScheme(groupKeys);
 
-  g.append("g")
-    .attr("class", "axis x")
-    .attr("transform", "translate(0," + height + ")")
-    .call(
-      d3
-        .axisBottom(x)
-        .ticks(5)
-        .tickFormat(skipTicks(30, x, (d) => d.toString()))
-    )
-    .selectAll("text")
-    .attr("y", 10)
-    .attr("x", -8)
-    .attr("dy", ".35em")
-    .attr("transform", "rotate(-45)")
-    .style("text-anchor", "end");
+  const xAxis = g.append("g").attr("class", "axis x");
+  const yAxis = g.append("g").attr("class", "axis y");
+  const bars = g.append("g");
 
-  g.append("g")
-    .attr("class", "axis y")
-    .call(d3.axisLeft(y).tickSize(-width).tickFormat(formatCurrencyCrude));
+  const tooltipContent = (visibleGroups: string[]) => (d: any) => {
+    const postings = _.filter((d.data as unknown as { postings: Posting[] }).postings, (posting) =>
+      visibleGroups.includes(incomeGroup(posting))
+    );
+    const total = _.sumBy(postings, (p) => -p.amount);
 
-  g.append("g")
-    .selectAll("g")
-    .data(
-      d3.stack().offset(d3.stackOffsetDiverging).keys(groupKeys)(
-        points as { [key: string]: number }[]
+    return tooltip(
+      _.sortBy(
+        postings.map((p) => [
+          restName(p.account),
+          [formatCurrency(-p.amount), "has-text-weight-bold has-text-right"]
+        ]),
+        (r) => r[0]
+      ),
+      { total: formatCurrency(total) }
+    );
+  };
+
+  let firstRender = true;
+  const render = (visibleGroups: string[]) => {
+    x.domain(points.map((p) => p.month));
+    y.domain(incomeTimelineDomain(points, visibleGroups));
+
+    const transition = svg.transition().duration(firstRender ? 0 : 350);
+    firstRender = false;
+
+    xAxis
+      .attr("transform", "translate(0," + height + ")")
+      .transition(transition)
+      .call(
+        d3
+          .axisBottom(x)
+          .ticks(5)
+          .tickFormat(skipTicks(30, x, (d) => d.toString()))
       )
-    )
-    .enter()
-    .append("g")
-    .attr("fill", function (d) {
-      return z(d.key.split("-")[0]);
-    })
-    .selectAll("rect")
-    .data(function (d) {
-      return d;
-    })
-    .enter()
-    .append("rect")
-    .attr("data-tippy-content", (d) => {
-      const postings: Posting[] = (d.data as any).postings;
-      const total = _.sumBy(postings, (p) => -p.amount);
-      return tooltip(
-        _.sortBy(
-          postings.map((p) => [
-            restName(p.account),
-            [formatCurrency(-p.amount), "has-text-weight-bold has-text-right"]
-          ]),
-          (r) => r[0]
-        ),
-        { total: formatCurrency(total) }
-      );
-    })
-    .attr("x", function (d) {
-      return (
-        x((d.data as any).month) + (x.bandwidth() - Math.min(x.bandwidth(), MAX_BAR_WIDTH)) / 2
-      );
-    })
-    .attr("y", function (d) {
-      return y(d[1]);
-    })
-    .attr("height", function (d) {
-      return y(d[0]) - y(d[1]);
-    })
-    .attr("width", Math.min(x.bandwidth(), MAX_BAR_WIDTH));
+      .selectAll("text")
+      .attr("y", 10)
+      .attr("x", -8)
+      .attr("dy", ".35em")
+      .attr("transform", "rotate(-45)")
+      .style("text-anchor", "end");
 
-  return _.map(groupKeys, (k) => {
+    yAxis
+      .transition(transition)
+      .call(d3.axisLeft(y).tickSize(-width).tickFormat(formatCurrencyCrude));
+
+    bars
+      .selectAll("g")
+      .data(
+        d3.stack().offset(d3.stackOffsetDiverging).keys(visibleGroups)(
+          points as { [key: string]: number }[]
+        ),
+        (d: any) => d.key
+      )
+      .join(
+        (enter) => enter.append("g"),
+        (update) => update,
+        (exit) => exit.remove()
+      )
+      .attr("fill", (d: any) => z(d.key.split("-")[0]))
+      .selectAll("rect")
+      .data(
+        (d: any) => d,
+        (d: any) => d.data.month
+      )
+      .join(
+        (enter) => enter.append("rect"),
+        (update) => update,
+        (exit) => exit.remove()
+      )
+      .attr("data-tippy-content", tooltipContent(visibleGroups))
+      .attr(
+        "x",
+        (d: any) => x(d.data.month) + (x.bandwidth() - Math.min(x.bandwidth(), MAX_BAR_WIDTH)) / 2
+      )
+      .attr("y", (d: any) => y(d[1]))
+      .attr("height", (d: any) => y(d[0]) - y(d[1]))
+      .attr("width", Math.min(x.bandwidth(), MAX_BAR_WIDTH));
+  };
+
+  const visibleGroups = new Set(groupKeys);
+  const legends = _.map(groupKeys, (k) => {
     return {
       label: groupTotal[k],
       color: z(k),
-      shape: "square"
-    };
+      shape: "square",
+      toggle: true,
+      selected: true,
+      onClick: (legend: Legend) => {
+        if (legend.selected) {
+          visibleGroups.add(k);
+        } else {
+          visibleGroups.delete(k);
+        }
+        render(groupKeys.filter((group) => visibleGroups.has(group)));
+      }
+    } as Legend;
   });
+
+  render(groupKeys);
+
+  return legends;
 }
 
 function financialYear(card: IncomeYearlyCard) {

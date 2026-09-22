@@ -400,6 +400,7 @@ export interface Legend {
   label: string;
   texture?: any;
   onClick?: (legend: Legend) => void;
+  toggle?: boolean;
 
   selected?: boolean;
 }

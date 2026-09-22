@@ -408,6 +408,15 @@ svg text {
   border-radius: $radius;
 }
 
+.legend-box.inactive {
+  opacity: 0.45;
+}
+
+.legend-box:focus-visible {
+  outline: 2px solid $link;
+  outline-offset: 2px;
+}
+
 #d3-salary-timeline .x.axis > g.tick {
   display: none;
 }
