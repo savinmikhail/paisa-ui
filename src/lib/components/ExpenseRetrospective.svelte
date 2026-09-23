@@ -101,7 +101,7 @@
         <strong>{formatCurrency(data.personal_expense_median)}</strong>
         <small class="has-text-grey">includes confirmed one-offs</small>
       </div>
-      <div class="metric-row accent has-background-info-light">
+      <div class="metric-row accent has-background-grey-lightest">
         <span class="has-text-grey-dark">Regular Personal Burn</span>
         <strong>{formatCurrency(data.regular_personal_burn_median)}</strong>
         <small class="has-text-grey">one-offs excluded</small>
