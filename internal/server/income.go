@@ -5,6 +5,7 @@ import (
 
 	"github.com/ananthakumaran/paisa/internal/model/posting"
 	"github.com/ananthakumaran/paisa/internal/query"
+	"github.com/ananthakumaran/paisa/internal/reporting"
 	"github.com/ananthakumaran/paisa/internal/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/shopspring/decimal"
@@ -44,68 +45,53 @@ func GetIncome(db *gorm.DB) gin.H {
 }
 
 func computeIncomeTimeline(postings []posting.Posting) []Income {
-	var incomes []Income = make([]Income, 0)
+	incomes := make([]Income, 0)
 
 	if len(postings) == 0 {
 		return incomes
 	}
 
-	var p posting.Posting
-	end := utils.EndOfToday()
-	for start := utils.BeginningOfMonth(postings[0].Date); start.Before(end); start = start.AddDate(0, 1, 0) {
-		var currentMonthPostings []posting.Posting = make([]posting.Posting, 0)
-		for len(postings) > 0 && (postings[0].Date.Before(utils.EndOfMonth(start)) || postings[0].Date.Equal(start)) {
-			p, postings = postings[0], postings[1:]
-			currentMonthPostings = append(currentMonthPostings, p)
-		}
-
-		incomes = append(incomes, Income{Date: start, Postings: currentMonthPostings})
-
+	start := utils.BeginningOfMonth(postings[0].Date)
+	end := utils.BeginningOfMonth(utils.EndOfToday()).AddDate(0, 1, 0)
+	period := reporting.Period{Start: start, End: end}
+	for _, month := range reporting.AggregateReportMonthly(postings, period, reporting.Options{}, reporting.IncomeReport) {
+		incomes = append(incomes, Income{Date: month.Period.Start, Postings: postingsFromEntries(month.Entries)})
 	}
 	return incomes
 }
 
 func computeTaxTimeline(postings []posting.Posting) []Tax {
-	var taxes []Tax = make([]Tax, 0)
+	taxes := make([]Tax, 0)
 
 	if len(postings) == 0 {
 		return taxes
 	}
 
-	var p posting.Posting
 	end := utils.EndOfToday()
 	for start := utils.BeginningOfFinancialYear(postings[0].Date); start.Before(end); start = start.AddDate(1, 0, 0) {
 		yearEnd := utils.EndOfFinancialYear(start)
-		var currentMonthPostings []posting.Posting = make([]posting.Posting, 0)
-		for len(postings) > 0 && (postings[0].Date.Before(yearEnd) || postings[0].Date.Equal(start)) {
-			p, postings = postings[0], postings[1:]
-			currentMonthPostings = append(currentMonthPostings, p)
-		}
-
-		taxes = append(taxes, Tax{StartDate: start, EndDate: yearEnd, Postings: currentMonthPostings})
+		period := reporting.Period{Start: start, End: yearEnd.Add(time.Nanosecond)}
+		entries := reporting.SelectReport(postings, period, reporting.Options{}, reporting.TaxReport)
+		taxes = append(taxes, Tax{StartDate: start, EndDate: yearEnd, Postings: postingsFromEntries(entries)})
 
 	}
 	return taxes
 }
 
 func computeIncomeYearlyCard(start time.Time, taxes []posting.Posting, incomes []posting.Posting) []IncomeYearlyCard {
-	var yearlyCards []IncomeYearlyCard = make([]IncomeYearlyCard, 0)
+	yearlyCards := make([]IncomeYearlyCard, 0)
 
-	var p posting.Posting
 	end := utils.EndOfToday()
 	for start = utils.BeginningOfFinancialYear(start); start.Before(end); start = start.AddDate(1, 0, 0) {
 		yearEnd := utils.EndOfFinancialYear(start)
-		var netTax decimal.Decimal = decimal.Zero
-		for len(taxes) > 0 && utils.IsWithDate(taxes[0].Date, start, yearEnd) {
-			p, taxes = taxes[0], taxes[1:]
-			netTax = netTax.Add(p.Amount)
+		period := reporting.Period{Start: start, End: yearEnd.Add(time.Nanosecond)}
+		taxEntries := reporting.SelectReport(taxes, period, reporting.Options{}, reporting.TaxReport)
+		incomeEntries := reporting.SelectReport(incomes, period, reporting.Options{}, reporting.IncomeReport)
+		netTax := decimal.Zero
+		for _, entry := range taxEntries {
+			netTax = netTax.Add(entry.Posting.Amount)
 		}
-
-		var currentYearIncomes []posting.Posting = make([]posting.Posting, 0)
-		for len(incomes) > 0 && utils.IsWithDate(incomes[0].Date, start, yearEnd) {
-			p, incomes = incomes[0], incomes[1:]
-			currentYearIncomes = append(currentYearIncomes, p)
-		}
+		currentYearIncomes := postingsFromEntries(incomeEntries)
 
 		grossIncome := utils.SumBy(currentYearIncomes, func(p posting.Posting) decimal.Decimal {
 			return p.Amount.Neg()
@@ -122,4 +108,12 @@ func computeIncomeYearlyCard(start time.Time, taxes []posting.Posting, incomes [
 
 	}
 	return yearlyCards
+}
+
+func postingsFromEntries(entries []reporting.Entry) []posting.Posting {
+	postings := make([]posting.Posting, 0, len(entries))
+	for _, entry := range entries {
+		postings = append(postings, entry.Posting)
+	}
+	return postings
 }
