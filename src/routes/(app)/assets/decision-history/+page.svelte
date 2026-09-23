@@ -44,6 +44,12 @@
   }
 
   function fieldLabel(status: DecisionHistoryField["status"]) {
+    if (isSynthetic) {
+      if (status === "known") return "Известно";
+      if (status === "partial") return "Частично";
+      return "Неизвестно";
+    }
+
     if (status === "known") return "Known";
     if (status === "partial") return "Partial";
     return "Unknown";
@@ -51,19 +57,24 @@
 
   function attributionFields(item: DecisionHistoryCase): [string, DecisionHistoryField][] {
     return [
-      ["FX", item.attribution.fx],
-      ["Fees", item.attribution.fees],
-      ["Taxes", item.attribution.taxes],
-      ["RUB counterfactual", item.attribution.rubCounterfactual]
+      [isSynthetic ? "Валютный эффект" : "FX", item.attribution.fx],
+      [isSynthetic ? "Комиссии" : "Fees", item.attribution.fees],
+      [isSynthetic ? "Налоги" : "Taxes", item.attribution.taxes],
+      [
+        isSynthetic ? "Сценарий сравнения в RUB" : "RUB counterfactual",
+        item.attribution.rubCounterfactual
+      ]
     ];
   }
 </script>
 
 <svelte:head>
-  <title>Decision history · Paisa</title>
+  <title>{isSynthetic ? "История решений · Paisa" : "Decision history · Paisa"}</title>
   <meta
     name="description"
-    content="A manually curated, evidence-aware history of financial decisions."
+    content={isSynthetic
+      ? "История финансовых решений, отобранных вручную с учётом границ доказательств."
+      : "A manually curated, evidence-aware history of financial decisions."}
   />
 </svelte:head>
 
@@ -89,9 +100,11 @@
     {:else}
       <div class="decision-history-heading">
         <div>
-          <h1 class="title is-3 mb-1">Decision history</h1>
+          <h1 class="title is-3 mb-1">{isSynthetic ? "История решений" : "Decision history"}</h1>
           <p class="subtitle is-6 mb-0">
-            Four manually curated decisions, kept separate from automatic performance reporting.
+            {isSynthetic
+              ? "Четыре решения, отобранные вручную и отделённые от автоматической отчётности по результатам."
+              : "Four manually curated decisions, kept separate from automatic performance reporting."}
           </p>
         </div>
       </div>
@@ -99,19 +112,24 @@
       <div class="interpretation-note" data-testid="decision-history-ready">
         <span class="icon is-small" aria-hidden="true"><i class="fas fa-compass"></i></span>
         <div>
-          <strong>Interpretation boundary</strong>
+          <strong>{isSynthetic ? "Граница интерпретации" : "Interpretation boundary"}</strong>
           <span>
-            This view records what was decided, what is evidenced, and what remains open. It never
-            auto-labels a decision as success or failure.
+            {isSynthetic
+              ? "Здесь зафиксированы принятые решения, подтверждённые сведения и то, что остаётся открытым. Экран не помечает решение как успешное или неуспешное автоматически."
+              : "This view records what was decided, what is evidenced, and what remains open. It never auto-labels a decision as success or failure."}
           </span>
         </div>
       </div>
 
       <div class="history-layout">
-        <aside class="history-index" aria-label="Decision history index">
+        <aside
+          class="history-index"
+          aria-label={isSynthetic ? "Индекс решений" : "Decision history index"}
+        >
           <div class="index-heading">
-            <span class="eyebrow">Case index</span>
-            <span class="index-count">{decisionCases.length} cases</span>
+            <span class="eyebrow">{isSynthetic ? "Индекс решений" : "Case index"}</span>
+            <span class="index-count">{decisionCases.length} {isSynthetic ? "кейса" : "cases"}</span
+            >
           </div>
           <ol>
             {#each decisionCases as item, index}
@@ -132,8 +150,9 @@
             {/each}
           </ol>
           <p class="index-footnote">
-            Curated records are not a complete transaction timeline. Follow source refs for the
-            evidence boundary.
+            {isSynthetic
+              ? "Отобранные записи не являются полной лентой транзакций. Сверяйтесь со ссылками на источники, чтобы понять границы доказательств."
+              : "Curated records are not a complete transaction timeline. Follow source refs for the evidence boundary."}
           </p>
         </aside>
 
@@ -159,27 +178,30 @@
               <div class="case-body">
                 <div class="narrative-column">
                   <div class="narrative-block">
-                    <span class="field-label">Decision</span>
+                    <span class="field-label">{isSynthetic ? "Решение" : "Decision"}</span>
                     <p class="decision-copy">{item.decision}</p>
                   </div>
                   <div class="narrative-block">
-                    <span class="field-label">Context</span>
+                    <span class="field-label">{isSynthetic ? "Контекст" : "Context"}</span>
                     <p>{item.context}</p>
                   </div>
                   <div class="narrative-block outcome-block">
-                    <span class="field-label">Outcome</span>
+                    <span class="field-label">{isSynthetic ? "Итог" : "Outcome"}</span>
                     <p>{item.outcome}</p>
                   </div>
                 </div>
 
                 <div class="evidence-column">
                   <div class="amount-panel">
-                    <span class="field-label">Amount</span>
+                    <span class="field-label">{isSynthetic ? "Сумма" : "Amount"}</span>
                     <strong>{item.amount.label}</strong>
                     <span>{item.amount.currency}</span>
                   </div>
 
-                  <div class="attribution-grid" aria-label="Attribution fields">
+                  <div
+                    class="attribution-grid"
+                    aria-label={isSynthetic ? "Поля атрибуции" : "Attribution fields"}
+                  >
                     {#each attributionFields(item) as [label, field]}
                       <div class="evidence-field" class:field-unknown={field.status === "unknown"}>
                         <div class="evidence-field-heading">
@@ -196,7 +218,9 @@
 
               <footer class="case-footer">
                 <div class="footer-section">
-                  <span class="field-label">Source refs</span>
+                  <span class="field-label"
+                    >{isSynthetic ? "Ссылки на источники" : "Source refs"}</span
+                  >
                   <ul class="source-list">
                     {#each item.sourceRefs as source}
                       <li><span class="source-mark" aria-hidden="true">↗</span>{source}</li>
@@ -204,7 +228,9 @@
                   </ul>
                 </div>
                 <div class="footer-section caveat-section">
-                  <span class="field-label">Evidence caveats</span>
+                  <span class="field-label"
+                    >{isSynthetic ? "Ограничения доказательств" : "Evidence caveats"}</span
+                  >
                   <ul class="caveat-list">
                     {#each item.caveats as caveat}
                       <li>{caveat}</li>
@@ -216,7 +242,6 @@
           {/each}
         </div>
       </div>
-
     {/if}
   </div>
 </section>
