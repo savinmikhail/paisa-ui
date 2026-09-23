@@ -21,6 +21,10 @@
       "type": "string",
       "description": "Optional read-only JSON report with manually curated Exposure metadata, relative to the config file."
     },
+    "decision_history_file": {
+      "type": "string",
+      "description": "Optional read-only JSON report with manually curated Decision History, relative to the config file."
+    },
     "readonly": {
       "type": "boolean",
       "description": "Run in readonly mode.",

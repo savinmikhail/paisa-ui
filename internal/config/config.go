@@ -130,6 +130,7 @@ type Config struct {
 	DBPath                     string       `json:"db_path" yaml:"db_path"`
 	SheetsDirectory            string       `json:"sheets_directory" yaml:"sheets_directory"`
 	ExposureMetadataFile       string       `json:"exposure_metadata_file" yaml:"exposure_metadata_file"`
+	DecisionHistoryFile        string       `json:"decision_history_file" yaml:"decision_history_file"`
 	Readonly                   bool         `json:"readonly" yaml:"readonly"`
 	LedgerCli                  string       `json:"ledger_cli" yaml:"ledger_cli"`
 	DefaultCurrency            string       `json:"default_currency" yaml:"default_currency"`
@@ -168,6 +169,7 @@ var defaultConfig = Config{
 	Readonly:                   false,
 	LedgerCli:                  "ledger",
 	DefaultCurrency:            "INR",
+	DecisionHistoryFile:        "",
 	DisplayPrecision:           0,
 	AmountAlignmentColumn:      52,
 	Locale:                     "en-IN",
@@ -380,6 +382,20 @@ func GetExposureMetadataPath() string {
 	path := strings.TrimSpace(os.Getenv("PAISA_EXPOSURE_METADATA_FILE"))
 	if path == "" {
 		path = strings.TrimSpace(config.ExposureMetadataFile)
+	}
+	if path == "" {
+		return ""
+	}
+	if filepath.IsAbs(path) {
+		return path
+	}
+	return filepath.Join(GetConfigDir(), path)
+}
+
+func GetDecisionHistoryPath() string {
+	path := strings.TrimSpace(os.Getenv("PAISA_DECISION_HISTORY_FILE"))
+	if path == "" {
+		path = strings.TrimSpace(config.DecisionHistoryFile)
 	}
 	if path == "" {
 		return ""
