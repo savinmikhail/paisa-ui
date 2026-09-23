@@ -1,0 +1,20 @@
+{
+  "name": "expense-baseline-retrospective",
+  "route": "/expense/monthly?fixture=expense-baseline",
+  "viewport": { "width": 1440, "height": 1200, "device_scale_factor": 1 },
+  "fixture": "src/lib/fixtures/expense-baseline.json",
+  "wait_for_text": [
+    "Personal expense retrospective",
+    "Regular Personal Burn",
+    "Growing faster than baseline",
+    "Recurring commitments",
+    "One-offs stay visible"
+  ],
+  "assert_visible_text": [
+    "Business",
+    "Tax",
+    "Capital Placement",
+    "Travel",
+    "+400% vs median"
+  ]
+}

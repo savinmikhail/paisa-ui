@@ -51,6 +51,73 @@ export interface Posting {
   balance: number;
 }
 
+export interface ExpenseBaselineMonth {
+  date: dayjs.Dayjs;
+  personal_expense: number;
+  regular_personal_burn: number;
+}
+
+export interface ExpenseExclusion {
+  class: string;
+  label: string;
+  amount: number;
+  count: number;
+}
+
+export interface ExpenseOneOff {
+  posting: Posting;
+  category: string;
+}
+
+export interface ExpenseCategorySignal {
+  category: string;
+  current: number;
+  baseline_median: number;
+  delta: number;
+  growth_percent: number;
+}
+
+export interface ExpenseCommitment {
+  key: string;
+  category: string;
+  payee: string;
+  amount: number;
+  interval: number;
+  period: string;
+  last_date: dayjs.Dayjs;
+  count: number;
+}
+
+export interface ExpenseRetrospective {
+  start_date: dayjs.Dayjs;
+  end_date: dayjs.Dayjs;
+  months: ExpenseBaselineMonth[];
+  personal_expense_median: number;
+  regular_personal_burn_median: number;
+  excluded: ExpenseExclusion[];
+  one_offs: ExpenseOneOff[];
+  category_signals: ExpenseCategorySignal[];
+  recurring_commitments: ExpenseCommitment[];
+}
+
+export interface ExpenseResponse {
+  expenses: Posting[];
+  month_wise: {
+    expenses: { [key: string]: Posting[] };
+    incomes: { [key: string]: Posting[] };
+    investments: { [key: string]: Posting[] };
+    taxes: { [key: string]: Posting[] };
+  };
+  year_wise: {
+    expenses: { [key: string]: Posting[] };
+    incomes: { [key: string]: Posting[] };
+    investments: { [key: string]: Posting[] };
+    taxes: { [key: string]: Posting[] };
+  };
+  graph: { [key: string]: Graph };
+  retrospective: ExpenseRetrospective;
+}
+
 export interface IncomeStatement {
   startingBalance: number;
   endingBalance: number;
@@ -634,22 +701,7 @@ export function ajax(route: "/api/income"): Promise<{
   tax_timeline: Tax[];
   yearly_cards: IncomeYearlyCard[];
 }>;
-export function ajax(route: "/api/expense"): Promise<{
-  expenses: Posting[];
-  month_wise: {
-    expenses: { [key: string]: Posting[] };
-    incomes: { [key: string]: Posting[] };
-    investments: { [key: string]: Posting[] };
-    taxes: { [key: string]: Posting[] };
-  };
-  year_wise: {
-    expenses: { [key: string]: Posting[] };
-    incomes: { [key: string]: Posting[] };
-    investments: { [key: string]: Posting[] };
-    taxes: { [key: string]: Posting[] };
-  };
-  graph: { [key: string]: Graph };
-}>;
+export function ajax(route: "/api/expense"): Promise<ExpenseResponse>;
 
 export function ajax(route: "/api/budget"): Promise<{
   budgetsByMonth: { [key: string]: Budget };

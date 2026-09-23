@@ -54,6 +54,7 @@ func GetExpense(db *gorm.DB) gin.H {
 
 	return gin.H{
 		"expenses": expenses,
+		"retrospective": buildExpenseRetrospective(postings),
 		"month_wise": gin.H{
 			"expenses":    utils.GroupByMonth(expenses),
 			"incomes":     utils.GroupByMonth(incomes),

@@ -17,7 +17,7 @@ const config = {
   server: {
     proxy: {
       "/api": {
-        target: "http://localhost:7500"
+        target: process.env.PAISA_API_TARGET || "http://localhost:7500"
       }
     },
     fs: {

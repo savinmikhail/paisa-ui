@@ -7,7 +7,9 @@
     type Posting,
     formatCurrency,
     formatPercentage,
-    type Legend
+    type Legend,
+    type ExpenseResponse,
+    type ExpenseRetrospective
   } from "$lib/utils";
   import {
     renderMonthlyExpensesTimeline,
@@ -23,6 +25,8 @@
   import BoxLabel from "$lib/components/BoxLabel.svelte";
   import dayjs from "dayjs";
   import LegendCard from "$lib/components/LegendCard.svelte";
+  import ExpenseRetrospectiveView from "$lib/components/ExpenseRetrospective.svelte";
+  import { loadExpenseBaselineFixture } from "$lib/fixtures/expense-baseline";
 
   let groups = writable([]);
   let z: d3.ScaleOrdinal<string, string, never>,
@@ -46,6 +50,7 @@
     income = "";
 
   let current_month_expenses: Posting[] = [];
+  let retrospective: ExpenseRetrospective;
 
   $: {
     current_month_expenses = _.chain((grouped_expenses && grouped_expenses[$month]) || [])
@@ -92,6 +97,15 @@
   });
 
   onMount(async () => {
+    const response: ExpenseResponse =
+      new URLSearchParams(window.location.search).get("fixture") === "expense-baseline"
+        ? loadExpenseBaselineFixture()
+        : await ajax("/api/expense");
+
+    if (new URLSearchParams(window.location.search).get("fixture") === "expense-baseline") {
+      month.set("2024-06");
+    }
+
     ({
       expenses: expenses,
       month_wise: {
@@ -99,8 +113,9 @@
         incomes: grouped_incomes,
         investments: grouped_investments,
         taxes: grouped_taxes
-      }
-    } = await ajax("/api/expense"));
+      },
+      retrospective
+    } = response);
 
     setAllowedDateRange(_.map(expenses, (e) => e.date));
     ({ z, destroy, legends } = renderMonthlyExpensesTimeline(expenses, groups, month, dateRange));
@@ -118,6 +133,9 @@
 
 <section class="section tab-expense">
   <div class="container is-fluid">
+    {#if retrospective}
+      <ExpenseRetrospectiveView data={retrospective} />
+    {/if}
     <div class="columns is-flex-wrap-wrap">
       <div class="column is-3">
         <div class="columns is-flex-wrap-wrap">

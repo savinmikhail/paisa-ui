@@ -1,0 +1,44 @@
+{
+  "expenses": [
+    { "id": "synthetic-food-jan", "date": "2024-01-10T00:00:00Z", "payee": "Synthetic groceries", "account": "Expenses:Food", "amount": 100, "quantity": 100, "commodity": "RUB", "transaction_id": "synthetic-food-jan", "status": "cleared", "tag_recurring": "", "transaction_begin_line": 1, "transaction_end_line": 2, "file_name": "synthetic-fixture.ledger", "forecast": false, "note": "", "transaction_note": "", "market_amount": 0, "balance": 0 },
+    { "id": "synthetic-food-feb", "date": "2024-02-10T00:00:00Z", "payee": "Synthetic groceries", "account": "Expenses:Food", "amount": 100, "quantity": 100, "commodity": "RUB", "transaction_id": "synthetic-food-feb", "status": "cleared", "tag_recurring": "", "transaction_begin_line": 3, "transaction_end_line": 4, "file_name": "synthetic-fixture.ledger", "forecast": false, "note": "", "transaction_note": "", "market_amount": 0, "balance": 0 },
+    { "id": "synthetic-food-mar", "date": "2024-03-10T00:00:00Z", "payee": "Synthetic groceries", "account": "Expenses:Food", "amount": 100, "quantity": 100, "commodity": "RUB", "transaction_id": "synthetic-food-mar", "status": "cleared", "tag_recurring": "", "transaction_begin_line": 5, "transaction_end_line": 6, "file_name": "synthetic-fixture.ledger", "forecast": false, "note": "", "transaction_note": "", "market_amount": 0, "balance": 0 },
+    { "id": "synthetic-food-apr", "date": "2024-04-10T00:00:00Z", "payee": "Synthetic groceries", "account": "Expenses:Food", "amount": 100, "quantity": 100, "commodity": "RUB", "transaction_id": "synthetic-food-apr", "status": "cleared", "tag_recurring": "", "transaction_begin_line": 7, "transaction_end_line": 8, "file_name": "synthetic-fixture.ledger", "forecast": false, "note": "", "transaction_note": "", "market_amount": 0, "balance": 0 },
+    { "id": "synthetic-food-may", "date": "2024-05-10T00:00:00Z", "payee": "Synthetic groceries", "account": "Expenses:Food", "amount": 100, "quantity": 100, "commodity": "RUB", "transaction_id": "synthetic-food-may", "status": "cleared", "tag_recurring": "", "transaction_begin_line": 9, "transaction_end_line": 10, "file_name": "synthetic-fixture.ledger", "forecast": false, "note": "", "transaction_note": "", "market_amount": 0, "balance": 0 },
+    { "id": "synthetic-food-jun", "date": "2024-06-10T00:00:00Z", "payee": "Synthetic groceries", "account": "Expenses:Food", "amount": 500, "quantity": 500, "commodity": "RUB", "transaction_id": "synthetic-food-jun", "status": "cleared", "tag_recurring": "", "transaction_begin_line": 11, "transaction_end_line": 12, "file_name": "synthetic-fixture.ledger", "forecast": false, "note": "", "transaction_note": "", "market_amount": 0, "balance": 0 },
+    { "id": "synthetic-travel-one-off", "date": "2024-06-11T00:00:00Z", "payee": "Synthetic travel", "account": "Expenses:Travel", "amount": 700, "quantity": 700, "commodity": "RUB", "transaction_id": "synthetic-travel-one-off", "status": "cleared", "tag_recurring": "", "transaction_begin_line": 13, "transaction_end_line": 14, "file_name": "synthetic-fixture.ledger", "forecast": false, "note": "", "transaction_note": "; burn-class: one-off", "market_amount": 0, "balance": 0 },
+    { "id": "synthetic-business", "date": "2024-06-12T00:00:00Z", "payee": "Synthetic business", "account": "Expenses:Business:Software", "amount": 900, "quantity": 900, "commodity": "RUB", "transaction_id": "synthetic-business", "status": "cleared", "tag_recurring": "", "transaction_begin_line": 15, "transaction_end_line": 16, "file_name": "synthetic-fixture.ledger", "forecast": false, "note": "", "transaction_note": "", "market_amount": 0, "balance": 0 },
+    { "id": "synthetic-capital-placement", "date": "2024-06-13T00:00:00Z", "payee": "Synthetic investment fee", "account": "Expenses:Investments:Broker Fees", "amount": 300, "quantity": 300, "commodity": "RUB", "transaction_id": "synthetic-capital-placement", "status": "cleared", "tag_recurring": "", "transaction_begin_line": 17, "transaction_end_line": 18, "file_name": "synthetic-fixture.ledger", "forecast": false, "note": "", "transaction_note": "", "market_amount": 0, "balance": 0 }
+  ],
+  "retrospective": {
+    "start_date": "2024-01-01T00:00:00Z",
+    "end_date": "2024-07-01T00:00:00Z",
+    "months": [
+      { "date": "2024-01-01T00:00:00Z", "personal_expense": 100, "regular_personal_burn": 100 },
+      { "date": "2024-02-01T00:00:00Z", "personal_expense": 100, "regular_personal_burn": 100 },
+      { "date": "2024-03-01T00:00:00Z", "personal_expense": 100, "regular_personal_burn": 100 },
+      { "date": "2024-04-01T00:00:00Z", "personal_expense": 100, "regular_personal_burn": 100 },
+      { "date": "2024-05-01T00:00:00Z", "personal_expense": 100, "regular_personal_burn": 100 },
+      { "date": "2024-06-01T00:00:00Z", "personal_expense": 1180, "regular_personal_burn": 480 }
+    ],
+    "personal_expense_median": 100,
+    "regular_personal_burn_median": 100,
+    "excluded": [
+      { "class": "business", "label": "Business", "amount": 900, "count": 1 },
+      { "class": "tax", "label": "Tax", "amount": 200, "count": 1 },
+      { "class": "capital_placement", "label": "Capital Placement", "amount": 300, "count": 1 }
+    ],
+    "one_offs": [
+      { "category": "Travel", "posting": { "id": "synthetic-travel-one-off", "date": "2024-06-11T00:00:00Z", "payee": "Synthetic travel", "account": "Expenses:Travel", "amount": 700, "quantity": 700, "commodity": "RUB", "transaction_id": "synthetic-travel-one-off", "status": "cleared", "tag_recurring": "", "transaction_begin_line": 13, "transaction_end_line": 14, "file_name": "synthetic-fixture.ledger", "forecast": false, "note": "", "transaction_note": "; burn-class: one-off", "market_amount": 0, "balance": 0 } }
+    ],
+    "category_signals": [
+      { "category": "Food", "current": 500, "baseline_median": 100, "delta": 400, "growth_percent": 400 }
+    ],
+    "recurring_commitments": [
+      { "key": "Synthetic rent", "category": "Rent", "payee": "Synthetic rent", "amount": 100, "interval": 31, "period": "0 9 1 * *", "last_date": "2024-06-01T00:00:00Z", "count": 6 }
+    ]
+  },
+  "month_wise": { "expenses": {}, "incomes": {}, "investments": {}, "taxes": {} },
+  "year_wise": { "expenses": {}, "incomes": {}, "investments": {}, "taxes": {} },
+  "graph": {}
+}
