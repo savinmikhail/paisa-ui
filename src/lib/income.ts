@@ -198,14 +198,13 @@ function renderIncomeTimeline(incomes: Income[], id: string, timeFormat: string)
       .attr("display", showMedian ? null : "none")
       .attr("d", line);
 
+    const medianPoints: Array<{ month: string; median: number }> = points
+      .map((point, index) => ({ month: point.month, median: medians[index] }))
+      .filter((point): point is { month: string; median: number } => point.median !== null);
+
     medianHitTargets
-      .selectAll("rect")
-      .data(
-        points
-          .map((point, index) => ({ month: point.month, median: medians[index] }))
-          .filter((point): point is { month: string; median: number } => point.median !== null),
-        (d) => d.month
-      )
+      .selectAll<SVGRectElement, { month: string; median: number }>("rect")
+      .data(medianPoints, (d) => d.month)
       .join("rect")
       .attr("display", showMedian ? null : "none")
       .attr("fill", "transparent")
