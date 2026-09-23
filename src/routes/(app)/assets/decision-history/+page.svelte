@@ -99,7 +99,7 @@
       </div>
     {:else}
       <div class="decision-history-heading">
-        <div>
+        <div class="page-heading-copy">
           <h1 class="title is-3 mb-1">{isSynthetic ? "История решений" : "Decision history"}</h1>
           <p class="subtitle is-6 mb-0">
             {isSynthetic
@@ -265,6 +265,18 @@
   .decision-history-heading .subtitle {
     color: color-mix(in srgb, currentColor 68%, transparent);
     max-width: 48rem;
+  }
+
+  .page-heading-copy {
+    display: grid;
+    gap: 0.4rem;
+    min-width: 0;
+  }
+
+  .page-heading-copy > .title,
+  .page-heading-copy > .subtitle {
+    margin-bottom: 0;
+    margin-top: 0;
   }
 
   .interpretation-note {

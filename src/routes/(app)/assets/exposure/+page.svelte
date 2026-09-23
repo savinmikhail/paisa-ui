@@ -104,7 +104,7 @@
 <section class="section exposure-screen" data-testid="exposure-screen">
   <div class="container is-fluid">
     <div class="exposure-heading">
-      <div>
+      <div class="page-heading-copy">
         <h1 class="title is-3 mb-2">Exposure</h1>
         <p class="subtitle is-6 mb-0">
           Where assets can fail together — across institutions, custody, routes, and controls.
@@ -460,6 +460,22 @@
 
   .exposure-heading {
     margin-bottom: 1.25rem;
+  }
+
+  .page-heading-copy {
+    display: grid;
+    gap: 0.4rem;
+    min-width: 0;
+  }
+
+  .page-heading-copy > .title,
+  .page-heading-copy > .subtitle {
+    margin-bottom: 0;
+    margin-top: 0;
+  }
+
+  .exposure-heading > div:last-child {
+    padding-top: 0.35rem;
   }
 
   .exposure-summary {
