@@ -96,6 +96,7 @@ function renderIncomeTimeline(incomes: Income[], id: string, timeFormat: string)
     .attr("stroke", COLORS.danger)
     .attr("stroke-width", 2)
     .attr("stroke-dasharray", "7,5");
+  const medianHitTargets = g.append("g").attr("class", "median-hit-targets");
 
   const tooltipContent = (visibleGroups: string[]) => (d: any) => {
     const postings = _.filter((d.data as unknown as { postings: Posting[] }).postings, (posting) =>
@@ -196,6 +197,26 @@ function renderIncomeTimeline(incomes: Income[], id: string, timeFormat: string)
       .datum(points.map((point, index) => ({ month: point.month, median: medians[index] })))
       .attr("display", showMedian ? null : "none")
       .attr("d", line);
+
+    medianHitTargets
+      .selectAll("rect")
+      .data(
+        points
+          .map((point, index) => ({ month: point.month, median: medians[index] }))
+          .filter((point): point is { month: string; median: number } => point.median !== null),
+        (d) => d.month
+      )
+      .join("rect")
+      .attr("display", showMedian ? null : "none")
+      .attr("fill", "transparent")
+      .attr("x", (d) => x(d.month) + x.bandwidth() / 2 - 10)
+      .attr("y", (d) => y(d.median) - 10)
+      .attr("width", 20)
+      .attr("height", 20)
+      .attr("tabindex", 0)
+      .attr("role", "img")
+      .attr("aria-label", (d) => `${d.month}: ${formatCurrency(d.median)}`)
+      .attr("data-tippy-content", (d) => `${d.month}: ${formatCurrency(d.median)}`);
   };
 
   const visibleGroups = new Set(groupKeys);

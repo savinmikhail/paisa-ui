@@ -168,3 +168,37 @@
     <BoxLabel text="Financial Year Income Timeline" />
   </div>
 </section>
+
+<style lang="scss">
+  .passive-income-summary {
+    display: grid !important;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 1rem;
+    align-items: stretch;
+
+    :global(.level-item) {
+      min-width: 0;
+      margin: 0;
+      padding: 1rem;
+      border: 1px solid rgba(128, 128, 128, 0.25);
+      border-radius: 4px;
+    }
+
+    :global(.title) {
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
+  }
+
+  @media screen and (max-width: 1023px) {
+    .passive-income-summary {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media screen and (max-width: 600px) {
+    .passive-income-summary {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
