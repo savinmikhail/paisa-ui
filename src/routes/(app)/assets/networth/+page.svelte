@@ -80,7 +80,8 @@
         },
         onLeave: () => {
           focusedPoint = reduceNetworthInteraction({ focus: focusedPoint }, { type: "blur" }).focus;
-        }
+        },
+        onRangeSelect: selectNetworthRange
       }
     ));
   }
@@ -143,6 +144,13 @@
       draftFrom = dateInputValue(points[0].date);
       draftTo = dateInputValue(points[points.length - 1].date);
     }
+  }
+
+  function selectNetworthRange(from: dayjs.Dayjs, to: dayjs.Dayjs) {
+    draftFrom = dateInputValue(from);
+    draftTo = dateInputValue(to);
+    customRange = true;
+    focusedPoint = null;
   }
 
   const decompositionRows = [
@@ -343,6 +351,14 @@
 
   .networth-detail table {
     margin-bottom: 0;
+  }
+
+  :global(.networth-selection) {
+    fill: var(--bulma-primary);
+    fill-opacity: 0.12;
+    stroke: var(--bulma-primary);
+    stroke-opacity: 0.45;
+    pointer-events: none;
   }
 
   @media screen and (max-width: 768px) {

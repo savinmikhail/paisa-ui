@@ -1,3 +1,4 @@
+import dayjs, { type Dayjs } from "dayjs";
 import * as d3 from "d3";
 import { Delaunay } from "d3";
 import _ from "lodash";
@@ -17,6 +18,27 @@ import {
 export interface NetworthChartCallbacks {
   onHover?: (point: Networth, series: "networth" | "investment") => void;
   onLeave?: () => void;
+  onRangeSelect?: (from: Dayjs, to: Dayjs) => void;
+}
+
+export function selectionToInclusiveDateRange(
+  selection: [number, number],
+  scale: d3.ScaleTime<number, number>,
+  dates: Dayjs[]
+): { from: Dayjs; to: Dayjs } | null {
+  if (dates.length === 0) return null;
+
+  const [fromX, toX] = selection[0] <= selection[1] ? selection : [selection[1], selection[0]];
+  const fromDate = dayjs(scale.invert(fromX));
+  const toDate = dayjs(scale.invert(toX));
+  const from = dates.reduce((closest, date) =>
+    Math.abs(date.diff(fromDate)) < Math.abs(closest.diff(fromDate)) ? date : closest
+  );
+  const to = dates.reduce((closest, date) =>
+    Math.abs(date.diff(toDate)) < Math.abs(closest.diff(toDate)) ? date : closest
+  );
+
+  return from.isAfter(to, "day") ? { from: to, to: from } : { from, to };
 }
 
 function networth(d: Networth) {
@@ -171,6 +193,60 @@ export function renderNetworth(
     );
 
   const hoverCircle = layer.append("circle").attr("r", "3").attr("fill", "none");
+  const selectionOverlay = g
+    .append("rect")
+    .attr("class", "networth-selection")
+    .attr("y", 0)
+    .attr("height", height)
+    .style("display", "none");
+  const chartDates = points.map((point) => point.date);
+  const chartNode = svg.node() as SVGSVGElement;
+  let dragStartX: number | null = null;
+  let dragging = false;
+  const dragThreshold = 8;
+
+  const chartX = (event: PointerEvent) => {
+    const bounds = chartNode.getBoundingClientRect();
+    return Math.max(
+      0,
+      Math.min(
+        width,
+        ((event.clientX - bounds.left) / bounds.width) * (width + margin.left + margin.right) -
+          margin.left
+      )
+    );
+  };
+  const finishDrag = (event: PointerEvent) => {
+    if (dragStartX === null) return;
+    const endX = chartX(event);
+    if (dragging) {
+      const range = selectionToInclusiveDateRange([dragStartX, endX], x, chartDates);
+      if (range) callbacks.onRangeSelect?.(range.from, range.to);
+    }
+    selectionOverlay.style("display", "none");
+    dragStartX = null;
+    dragging = false;
+  };
+  const onPointerDown = (event: PointerEvent) => {
+    if (event.button !== 0) return;
+    dragStartX = chartX(event);
+    dragging = false;
+    chartNode.setPointerCapture?.(event.pointerId);
+  };
+  const onPointerMove = (event: PointerEvent) => {
+    if (dragStartX === null) return;
+    const currentX = chartX(event);
+    if (!dragging && Math.abs(currentX - dragStartX) < dragThreshold) return;
+    dragging = true;
+    selectionOverlay
+      .style("display", null)
+      .attr("x", Math.min(dragStartX, currentX))
+      .attr("width", Math.abs(currentX - dragStartX));
+  };
+  chartNode.addEventListener("pointerdown", onPointerDown);
+  chartNode.addEventListener("pointermove", onPointerMove);
+  chartNode.addEventListener("pointerup", finishDrag);
+  chartNode.addEventListener("pointercancel", finishDrag);
   const t = tippy(hoverCircle.node(), { theme: "light", delay: 0, allowHTML: true });
 
   const networthVoronoiPoints: Delaunay.Point[] = _.map(points, (d) => [x(d.date), y(networth(d))]);
@@ -254,6 +330,10 @@ export function renderNetworth(
   ];
 
   const destroy = () => {
+    chartNode.removeEventListener("pointerdown", onPointerDown);
+    chartNode.removeEventListener("pointermove", onPointerMove);
+    chartNode.removeEventListener("pointerup", finishDrag);
+    chartNode.removeEventListener("pointercancel", finishDrag);
     t.destroy();
   };
 
