@@ -1,6 +1,12 @@
 import assert from "node:assert/strict";
 import { describe, test } from "node:test";
-import { affectedAssets, aggregateExposure, bucketKey, fieldValueLabel } from "./exposure";
+import {
+  affectedAssets,
+  aggregateExposure,
+  buildExposureRelationMap,
+  bucketKey,
+  fieldValueLabel
+} from "./exposure";
 import { syntheticExposureReport } from "./exposure.fixture";
 
 const summary = aggregateExposure(syntheticExposureReport);
@@ -48,5 +54,43 @@ describe("exposure reporting contract", () => {
       ["asset-aurora-reserve", "asset-lumen-notes", "asset-cedar-note"]
     );
     assert.equal(fieldValueLabel("jurisdiction", null), "Jurisdiction · Unknown");
+  });
+
+  test("builds a bounded relation-first map with shares from existing aggregates", () => {
+    const map = buildExposureRelationMap(summary, "jurisdiction", "institution", 2);
+
+    assert.deepEqual(
+      map.relations.map((relation) => relation.key),
+      [
+        "jurisdiction:RU::institution:Northstar Cooperative",
+        "jurisdiction:IE::institution:Lumen Securities"
+      ]
+    );
+    assert.equal(map.relations[0].market_value, 460000);
+    assert.equal(map.relations[0].share, 460000 / 700000);
+    assert.deepEqual(map.relations[0].asset_ids, [
+      "asset-aurora-reserve",
+      "asset-lumen-notes",
+      "asset-cedar-note"
+    ]);
+  });
+
+  test("normalizes reversed fields and handles empty or missing relation data", () => {
+    const reversed = buildExposureRelationMap(summary, "institution", "jurisdiction", 1);
+    assert.equal(reversed.relations[0].left.field, "institution");
+    assert.equal(reversed.relations[0].right.value, "RU");
+    assert.equal(
+      buildExposureRelationMap(summary, "jurisdiction", "institution", 0).relations.length,
+      0
+    );
+
+    const emptySummary = aggregateExposure({
+      ...syntheticExposureReport,
+      assets: []
+    });
+    assert.deepEqual(
+      buildExposureRelationMap(emptySummary, "jurisdiction", "institution").relations,
+      []
+    );
   });
 });

@@ -92,7 +92,7 @@
         { label: "Gain", href: "/gain" },
         { label: "Allocation", href: "/allocation", help: "allocation-targets" },
         { label: "Analysis", href: "/analysis", tag: "alpha", help: "analysis" },
-        { label: "Exposure", href: "/exposure", tag: "preview" },
+        { label: "Exposure", href: "/exposure" },
         {
           label: "Decision history",
           href: "/assets/decision-history",

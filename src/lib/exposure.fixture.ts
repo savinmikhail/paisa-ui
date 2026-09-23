@@ -236,5 +236,5 @@ export const EXPOSURE_SCREENSHOT_INPUT = {
   route: "/assets/exposure",
   viewport: { width: 1440, height: 1100 },
   selected_bucket: "institution:Northstar Cooperative",
-  expected_labels: ["Exposure", "Synthetic fixture", "Northstar Cooperative", "Unknown"]
+  expected_labels: ["Exposure", "Shared exposure map", "Northstar Cooperative", "Unknown"]
 } as const;

@@ -72,6 +72,34 @@ export interface ExposureSummary {
   overlaps: ExposureOverlap[];
 }
 
+export interface ExposureRelationNode {
+  key: string;
+  field: FailureDomainField;
+  value: string;
+  label: string;
+  asset_ids: string[];
+  asset_count: number;
+  market_value: number;
+  share: number;
+}
+
+export interface ExposureRelation {
+  key: string;
+  left: ExposureRelationNode;
+  right: ExposureRelationNode;
+  asset_ids: string[];
+  asset_count: number;
+  market_value: number;
+  share: number;
+}
+
+export interface ExposureRelationMap {
+  left_field: FailureDomainField;
+  right_field: FailureDomainField;
+  total_relations: number;
+  relations: ExposureRelation[];
+}
+
 export const fieldLabels: Record<FailureDomainField, string> = {
   institution: "Institution",
   broker: "Broker",
@@ -225,4 +253,70 @@ export function affectedAssets(
 
 export function fieldValueLabel(field: FailureDomainField, value: string | null): string {
   return `${fieldLabels[field]} · ${value || UNKNOWN_LABEL}`;
+}
+
+function relationNode(bucket: ExposureBucket): ExposureRelationNode {
+  return {
+    key: bucket.key,
+    field: bucket.field,
+    value: bucket.value as string,
+    label: bucket.label,
+    asset_ids: bucket.asset_ids,
+    asset_count: bucket.asset_count,
+    market_value: bucket.market_value,
+    share: bucket.share
+  };
+}
+
+/**
+ * Selects a small, deterministic relation-first view from existing aggregates.
+ * Relations are shared asset concentrations, not probabilities or Venn areas.
+ */
+export function buildExposureRelationMap(
+  summary: ExposureSummary,
+  leftField: FailureDomainField,
+  rightField: FailureDomainField,
+  limit = 3
+): ExposureRelationMap {
+  const bucketsByKey = new Map(summary.buckets.map((bucket) => [bucket.key, bucket]));
+  const relations: ExposureRelation[] = [];
+
+  for (const overlap of summary.overlaps) {
+    const matchesForward = overlap.left_field === leftField && overlap.right_field === rightField;
+    const matchesReverse = overlap.left_field === rightField && overlap.right_field === leftField;
+    if (!matchesForward && !matchesReverse) continue;
+
+    const leftValue = matchesForward ? overlap.left_value : overlap.right_value;
+    const rightValue = matchesForward ? overlap.right_value : overlap.left_value;
+    const leftBucket = bucketsByKey.get(bucketKey(leftField, leftValue));
+    const rightBucket = bucketsByKey.get(bucketKey(rightField, rightValue));
+    if (!leftBucket || !rightBucket) continue;
+
+    relations.push({
+      key: `${leftBucket.key}::${rightBucket.key}`,
+      left: relationNode(leftBucket),
+      right: relationNode(rightBucket),
+      asset_ids: overlap.asset_ids,
+      asset_count: overlap.asset_count,
+      market_value: overlap.market_value,
+      share:
+        summary.total_market_value === 0 ? 0 : overlap.market_value / summary.total_market_value
+    });
+  }
+
+  relations.sort(
+    (left, right) =>
+      right.market_value - left.market_value ||
+      `${left.left.label}:${left.right.label}`.localeCompare(
+        `${right.left.label}:${right.right.label}`
+      )
+  );
+
+  const safeLimit = Number.isFinite(limit) ? Math.max(0, Math.floor(limit)) : 3;
+  return {
+    left_field: leftField,
+    right_field: rightField,
+    total_relations: relations.length,
+    relations: relations.slice(0, safeLimit)
+  };
 }
