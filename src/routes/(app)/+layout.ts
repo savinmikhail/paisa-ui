@@ -1,10 +1,11 @@
 export const trailingSlash = "never";
 
 import type { LayoutLoad } from "./$types";
+import { isPublicFixtureRoute } from "$lib/fixture_routes";
 import { ajax, configUpdated, setNow } from "$lib/utils";
 
 export const load = (async ({ url }) => {
-  if (["networth-ticket-04", "resilience", "money-flow"].includes(url.searchParams.get("fixture"))) {
+  if (isPublicFixtureRoute(url.pathname, url.searchParams.get("fixture"))) {
     globalThis.USER_CONFIG = {
       default_currency: "USD",
       readonly: true,

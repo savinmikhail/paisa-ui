@@ -12,7 +12,11 @@
   }
 </script>
 
-<section class="box expense-retrospective" aria-labelledby="expense-retrospective-title">
+<section
+  class="box expense-retrospective"
+  data-testid="expense-retrospective"
+  aria-labelledby="expense-retrospective-title"
+>
   <div class="retrospective-heading">
     <div>
       <h2 id="expense-retrospective-title" class="title is-5 mb-1">Personal expense retrospective</h2>
