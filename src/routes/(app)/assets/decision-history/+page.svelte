@@ -12,13 +12,13 @@
 
   let loadState: LoadState = "loading";
   let decisionCases: DecisionHistoryCase[] = [];
-  let isSynthetic = false;
+  let isFixture = false;
   let activeCaseId = "";
 
   onMount(async () => {
-    isSynthetic = $page.url.searchParams.get("fixture") === "synthetic";
+    isFixture = $page.url.searchParams.get("fixture") === "synthetic";
 
-    if (isSynthetic) {
+    if (isFixture) {
       decisionCases = syntheticDecisionHistory.cases;
       activeCaseId = decisionCases[0]?.id ?? "";
       loadState = "ready";
@@ -39,72 +39,79 @@
     }
   });
 
+  function retryLoading() {
+    window.location.reload();
+  }
+
   function selectCase(id: string) {
     activeCaseId = id;
   }
 
   function fieldLabel(status: DecisionHistoryField["status"]) {
-    if (isSynthetic) {
-      if (status === "known") return "Известно";
-      if (status === "partial") return "Частично";
-      return "Неизвестно";
-    }
-
-    if (status === "known") return "Known";
-    if (status === "partial") return "Partial";
-    return "Unknown";
+    if (status === "known") return "Известно";
+    if (status === "partial") return "Частично";
+    return "Неизвестно";
   }
 
   function attributionFields(item: DecisionHistoryCase): [string, DecisionHistoryField][] {
     return [
-      [isSynthetic ? "Валютный эффект" : "FX", item.attribution.fx],
-      [isSynthetic ? "Комиссии" : "Fees", item.attribution.fees],
-      [isSynthetic ? "Налоги" : "Taxes", item.attribution.taxes],
-      [
-        isSynthetic ? "Сценарий сравнения в RUB" : "RUB counterfactual",
-        item.attribution.rubCounterfactual
-      ]
+      ["Валютный эффект", item.attribution.fx],
+      ["Комиссии", item.attribution.fees],
+      ["Налоги", item.attribution.taxes],
+      ["Сценарий сравнения в RUB", item.attribution.rubCounterfactual]
     ];
+  }
+
+  function caseCountLabel(count: number) {
+    const remainderTen = count % 10;
+    const remainderHundred = count % 100;
+
+    if (remainderTen === 1 && remainderHundred !== 11) return "кейс";
+    if (
+      remainderTen >= 2 &&
+      remainderTen <= 4 &&
+      (remainderHundred < 12 || remainderHundred > 14)
+    ) {
+      return "кейса";
+    }
+    return "кейсов";
   }
 </script>
 
 <svelte:head>
-  <title>{isSynthetic ? "История решений · Paisa" : "Decision history · Paisa"}</title>
+  <title>История решений · Paisa</title>
   <meta
     name="description"
-    content={isSynthetic
-      ? "История финансовых решений, отобранных вручную с учётом границ доказательств."
-      : "A manually curated, evidence-aware history of financial decisions."}
+    content="История финансовых решений с указанием контекста, подтверждённых сведений и открытых вопросов."
   />
 </svelte:head>
 
 <section class="section decision-history-page">
   <div class="container is-fluid">
     {#if loadState === "loading"}
-      <div class="decision-history-loading" data-testid="decision-history-loading">
+      <div
+        class="decision-history-loading"
+        data-testid="decision-history-loading"
+        role="status"
+        aria-live="polite"
+      >
         <span class="loader" aria-hidden="true"></span>
-        <span>Loading decision history…</span>
+        <span>Загрузка истории решений…</span>
       </div>
     {:else if loadState === "unavailable"}
       <div class="decision-history-empty" data-testid="decision-history-unavailable">
-        <p class="title is-4">Decision history is not connected</p>
-        <p>
-          The private facts adapter is not available in this public UI checkout. No personal Ledger
-          data is bundled here.
-        </p>
-        <p class="has-text-grey">
-          For screenshot review, open this route with <code>?fixture=synthetic</code> to load the deterministic,
-          public-safe fixture.
-        </p>
+        <p class="title is-4">История решений недоступна</p>
+        <p>Не удалось загрузить данные. Проверьте подключение и повторите попытку.</p>
+        <button class="button is-link is-light" type="button" on:click={retryLoading}>
+          Повторить загрузку
+        </button>
       </div>
     {:else}
       <div class="decision-history-heading">
         <div class="page-heading-copy">
-          <h1 class="title is-3 mb-1">{isSynthetic ? "История решений" : "Decision history"}</h1>
+          <h1 class="title is-3 mb-1">История решений</h1>
           <p class="subtitle is-6 mb-0">
-            {isSynthetic
-              ? "Четыре решения, отобранные вручную и отделённые от автоматической отчётности по результатам."
-              : "Four manually curated decisions, kept separate from automatic performance reporting."}
+            Отобранные решения с контекстом, источниками и границами доказательств.
           </p>
         </div>
       </div>
@@ -112,23 +119,20 @@
       <div class="interpretation-note" data-testid="decision-history-ready">
         <span class="icon is-small" aria-hidden="true"><i class="fas fa-compass"></i></span>
         <div>
-          <strong>{isSynthetic ? "Граница интерпретации" : "Interpretation boundary"}</strong>
+          <strong>Граница интерпретации</strong>
           <span>
-            {isSynthetic
-              ? "Здесь зафиксированы принятые решения, подтверждённые сведения и то, что остаётся открытым. Экран не помечает решение как успешное или неуспешное автоматически."
-              : "This view records what was decided, what is evidenced, and what remains open. It never auto-labels a decision as success or failure."}
+            Здесь зафиксированы принятые решения, подтверждённые сведения и то, что остаётся
+            открытым. Экран не помечает решение как успешное или неуспешное автоматически.
           </span>
         </div>
       </div>
 
       <div class="history-layout">
-        <aside
-          class="history-index"
-          aria-label={isSynthetic ? "Индекс решений" : "Decision history index"}
-        >
+        <aside class="history-index" aria-label="Индекс решений">
           <div class="index-heading">
-            <span class="eyebrow">{isSynthetic ? "Индекс решений" : "Case index"}</span>
-            <span class="index-count">{decisionCases.length} {isSynthetic ? "кейса" : "cases"}</span
+            <span class="eyebrow">Индекс решений</span>
+            <span class="index-count"
+              >{decisionCases.length} {caseCountLabel(decisionCases.length)}</span
             >
           </div>
           <ol>
@@ -150,9 +154,8 @@
             {/each}
           </ol>
           <p class="index-footnote">
-            {isSynthetic
-              ? "Отобранные записи не являются полной лентой транзакций. Сверяйтесь со ссылками на источники, чтобы понять границы доказательств."
-              : "Curated records are not a complete transaction timeline. Follow source refs for the evidence boundary."}
+            Отобранные записи не являются полной лентой транзакций. Сверяйтесь со ссылками на
+            источники, чтобы понять границы доказательств.
           </p>
         </aside>
 
@@ -178,30 +181,27 @@
               <div class="case-body">
                 <div class="narrative-column">
                   <div class="narrative-block">
-                    <span class="field-label">{isSynthetic ? "Решение" : "Decision"}</span>
+                    <span class="field-label">Решение</span>
                     <p class="decision-copy">{item.decision}</p>
                   </div>
                   <div class="narrative-block">
-                    <span class="field-label">{isSynthetic ? "Контекст" : "Context"}</span>
+                    <span class="field-label">Контекст</span>
                     <p>{item.context}</p>
                   </div>
                   <div class="narrative-block outcome-block">
-                    <span class="field-label">{isSynthetic ? "Итог" : "Outcome"}</span>
+                    <span class="field-label">Итог</span>
                     <p>{item.outcome}</p>
                   </div>
                 </div>
 
                 <div class="evidence-column">
                   <div class="amount-panel">
-                    <span class="field-label">{isSynthetic ? "Сумма" : "Amount"}</span>
+                    <span class="field-label">Сумма</span>
                     <strong>{item.amount.label}</strong>
                     <span>{item.amount.currency}</span>
                   </div>
 
-                  <div
-                    class="attribution-grid"
-                    aria-label={isSynthetic ? "Поля атрибуции" : "Attribution fields"}
-                  >
+                  <div class="attribution-grid" aria-label="Поля атрибуции">
                     {#each attributionFields(item) as [label, field]}
                       <div class="evidence-field" class:field-unknown={field.status === "unknown"}>
                         <div class="evidence-field-heading">
@@ -218,9 +218,7 @@
 
               <footer class="case-footer">
                 <div class="footer-section">
-                  <span class="field-label"
-                    >{isSynthetic ? "Ссылки на источники" : "Source refs"}</span
-                  >
+                  <span class="field-label">Ссылки на источники</span>
                   <ul class="source-list">
                     {#each item.sourceRefs as source}
                       <li><span class="source-mark" aria-hidden="true">↗</span>{source}</li>
@@ -228,9 +226,7 @@
                   </ul>
                 </div>
                 <div class="footer-section caveat-section">
-                  <span class="field-label"
-                    >{isSynthetic ? "Ограничения доказательств" : "Evidence caveats"}</span
-                  >
+                  <span class="field-label">Ограничения доказательств</span>
                   <ul class="caveat-list">
                     {#each item.caveats as caveat}
                       <li>{caveat}</li>
