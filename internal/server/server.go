@@ -117,6 +117,26 @@ func Build(db *gorm.DB, enableCompression bool) *gin.Engine {
 		c.JSON(200, GetNetworth(db))
 	})
 
+	router.GET("/api/networth/reconciliation", func(c *gin.Context) {
+		var from, to time.Time
+		var err error
+		if value := c.Query("from"); value != "" {
+			from, err = time.Parse("2006-01-02", value)
+			if err != nil {
+				c.JSON(http.StatusBadRequest, gin.H{"error": "from must use YYYY-MM-DD"})
+				return
+			}
+		}
+		if value := c.Query("to"); value != "" {
+			to, err = time.Parse("2006-01-02", value)
+			if err != nil {
+				c.JSON(http.StatusBadRequest, gin.H{"error": "to must use YYYY-MM-DD"})
+				return
+			}
+		}
+		c.JSON(200, GetNetworthReconciliation(db, from, to))
+	})
+
 	router.GET("/api/assets/balance", func(c *gin.Context) {
 		c.JSON(200, assets.GetBalance(db))
 	})

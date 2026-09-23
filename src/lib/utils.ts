@@ -131,6 +131,24 @@ export interface Networth {
   netInvestmentAmount: number;
 }
 
+export interface NetworthDecomposition {
+  netSavings: number;
+  passiveIncome: number;
+  market: number;
+  fx: number;
+  debt: number;
+  corrections: number;
+  totalDelta: number;
+}
+
+export interface NetworthReconciliation {
+  from: dayjs.Dayjs;
+  to: dayjs.Dayjs;
+  opening: Networth;
+  closing: Networth;
+  decomposition: NetworthDecomposition;
+}
+
 export interface Gain {
   account: string;
   networth: Networth;
@@ -577,6 +595,8 @@ export function ajax(route: "/api/networth"): Promise<{
   networthTimeline: Networth[];
   xirr: number;
 }>;
+export function ajax(route: "/api/networth/reconciliation"): Promise<NetworthReconciliation>;
+export function ajax(route: `/api/networth/reconciliation${string}`): Promise<NetworthReconciliation>;
 export function ajax(route: "/api/gain"): Promise<{
   gain_breakdown: Gain[];
 }>;

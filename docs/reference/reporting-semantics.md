@@ -37,7 +37,11 @@ metric back to the journal without copying Ledger data into a new model.
 
 ## Deliberate boundary
 
-The seam does not yet define passive-income subcategories, arbitrary Net Worth
-range calculations, FX/market/debt decomposition, liquidity policy, or the
-distinction between Asset Movement and Capital Placement. Those are derived
-views for later tickets and must not be smuggled into this compatibility layer.
+Net Worth interval reconciliation is exposed as a read-only derived view. It
+returns opening/closing snapshots and six additive components: net savings,
+passive income, market, FX, debt, and corrections. The corrections component is
+explicit residual so the displayed parts always sum to closing minus opening;
+it is not a new Ledger posting or classification. The current seam can identify
+realized capital gains and explicit debt legs, while valuation changes without a
+source-level market/FX event remain residual until a later source model adds
+that provenance.

@@ -14,6 +14,11 @@ import {
   type Networth
 } from "./utils";
 
+export interface NetworthChartCallbacks {
+  onHover?: (point: Networth, series: "networth" | "investment") => void;
+  onLeave?: () => void;
+}
+
 function networth(d: Networth) {
   return d.investmentAmount + d.gainAmount - d.withdrawalAmount;
 }
@@ -24,10 +29,12 @@ function investment(d: Networth) {
 
 export function renderNetworth(
   points: Networth[],
-  element: Element
+  element: Element,
+  callbacks: NetworthChartCallbacks = {}
 ): { destroy: () => void; legends: Legend[] } {
-  const start = _.min(_.map(points, (p) => p.date)),
-    end = now();
+  const start = _.min(_.map(points, (p) => p.date));
+  const last = _.max(_.map(points, (p) => p.date));
+  const end = last?.isSame(start) ? last.add(1, "day") : last || now();
 
   const svg = d3.select(element);
 
@@ -191,6 +198,8 @@ export function renderNetworth(
     .append("path")
     .style("pointer-events", "all")
     .style("fill", "none")
+    .attr("data-series", ([pointType]) => pointType)
+    .attr("data-point-index", (_, i) => (i % points.length).toString())
     .attr("d", (_, i) => {
       return voronoi.renderCell(i);
     })
@@ -213,10 +222,12 @@ export function renderNetworth(
         ])
       });
       t.show();
+      callbacks.onHover?.(d, pointType as "networth" | "investment");
     })
     .on("mouseout", () => {
       t.hide();
       hoverCircle.attr("fill", "none");
+      callbacks.onLeave?.();
     });
 
   const legends: Legend[] = [
