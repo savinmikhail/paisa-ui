@@ -14,6 +14,7 @@ import (
 
 type DecisionHistoryPayload struct {
 	SchemaVersion string            `json:"schemaVersion"`
+	Source        string            `json:"source"`
 	Cases         []json.RawMessage `json:"cases"`
 }
 
@@ -45,6 +46,9 @@ func loadDecisionHistory(path string) (DecisionHistoryPayload, error) {
 	}
 	if payload.SchemaVersion != "decision-history/v1" {
 		return DecisionHistoryPayload{}, fmt.Errorf("unsupported decision history schema version %q", payload.SchemaVersion)
+	}
+	if payload.Source != "private-adapter" {
+		return DecisionHistoryPayload{}, errors.New("decision history source must declare private-adapter")
 	}
 	if payload.Cases == nil {
 		return DecisionHistoryPayload{}, errors.New("decision history cases must be an array")

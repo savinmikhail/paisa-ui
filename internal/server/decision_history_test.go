@@ -15,7 +15,7 @@ import (
 
 func TestDecisionHistoryEndpointReturnsConfiguredPayload(t *testing.T) {
 	decisionHistoryFile := filepath.Join(t.TempDir(), "decision-history.json")
-	content := []byte(`{"schemaVersion":"decision-history/v1","cases":[{"id":"private-test-case","title":"Private test case"}]}`)
+	content := []byte(`{"schemaVersion":"decision-history/v1","source":"private-adapter","cases":[{"id":"private-test-case","title":"Private test case"}]}`)
 	require.NoError(t, os.WriteFile(decisionHistoryFile, content, 0600))
 	t.Setenv("PAISA_DECISION_HISTORY_FILE", decisionHistoryFile)
 
@@ -28,6 +28,7 @@ func TestDecisionHistoryEndpointReturnsConfiguredPayload(t *testing.T) {
 	var payload DecisionHistoryPayload
 	require.NoError(t, json.Unmarshal(record.Body.Bytes(), &payload))
 	assert.Equal(t, "decision-history/v1", payload.SchemaVersion)
+	assert.Equal(t, "private-adapter", payload.Source)
 	require.Len(t, payload.Cases, 1)
 	assert.JSONEq(t, `{"id":"private-test-case","title":"Private test case"}`, string(payload.Cases[0]))
 }
@@ -57,4 +58,18 @@ func TestDecisionHistoryEndpointReturns503WhenSourceIsInvalid(t *testing.T) {
 
 	assert.Equal(t, http.StatusServiceUnavailable, record.Code)
 	assert.Contains(t, record.Body.String(), "unsupported decision history schema version")
+}
+
+func TestDecisionHistoryEndpointRejectsNonPrivateSource(t *testing.T) {
+	decisionHistoryFile := filepath.Join(t.TempDir(), "decision-history.json")
+	require.NoError(t, os.WriteFile(decisionHistoryFile, []byte(`{"schemaVersion":"decision-history/v1","source":"synthetic-fixture","cases":[]}`), 0600))
+	t.Setenv("PAISA_DECISION_HISTORY_FILE", decisionHistoryFile)
+
+	router := gin.New()
+	router.GET("/api/decision_history", decisionHistoryHandler())
+	record := httptest.NewRecorder()
+	router.ServeHTTP(record, httptest.NewRequest(http.MethodGet, "/api/decision_history", nil))
+
+	assert.Equal(t, http.StatusServiceUnavailable, record.Code)
+	assert.Contains(t, record.Body.String(), "private-adapter")
 }
