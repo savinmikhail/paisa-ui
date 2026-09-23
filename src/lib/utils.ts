@@ -10,6 +10,7 @@ import { error } from "@sveltejs/kit";
 import { goto } from "$app/navigation";
 import chroma from "chroma-js";
 import { iconGlyph } from "./icon";
+import type { ExposureReport } from "./exposure";
 
 export interface AutoCompleteItem {
   label: string;
@@ -626,13 +627,16 @@ export interface SheetLineResult {
 
 const tokenKey = "token";
 
-type RequestOptions = RequestInit & {
+export type RequestOptions = RequestInit & {
   background?: boolean;
 };
 
 export function ajax(
   route: "/api/config"
 ): Promise<{ config: UserConfig; schema: JSONSchema7; now: dayjs.Dayjs; accounts: string[] }>;
+export function ajax(
+  route: "/api/exposure" | "/api/exposure?source=synthetic"
+): Promise<ExposureReport>;
 export function ajax(route: "/api/harvest"): Promise<{ harvestables: Record<string, Harvestable> }>;
 export function ajax(
   route: "/api/capital_gains"
@@ -842,6 +846,7 @@ export function ajax(
 ): Promise<{ success: boolean; error?: string }>;
 
 export function ajax(route: "/api/ping"): Promise<{ success: boolean; error?: string }>;
+export function ajax(route: "/api/exposure"): Promise<ExposureReport>;
 
 export async function ajax(
   route: string,

@@ -129,6 +129,7 @@ type Config struct {
 	JournalPath                string       `json:"journal_path" yaml:"journal_path"`
 	DBPath                     string       `json:"db_path" yaml:"db_path"`
 	SheetsDirectory            string       `json:"sheets_directory" yaml:"sheets_directory"`
+	ExposureMetadataFile       string       `json:"exposure_metadata_file" yaml:"exposure_metadata_file"`
 	Readonly                   bool         `json:"readonly" yaml:"readonly"`
 	LedgerCli                  string       `json:"ledger_cli" yaml:"ledger_cli"`
 	DefaultCurrency            string       `json:"default_currency" yaml:"default_currency"`
@@ -373,6 +374,20 @@ func GetDBPath() string {
 	}
 
 	return config.DBPath
+}
+
+func GetExposureMetadataPath() string {
+	path := strings.TrimSpace(os.Getenv("PAISA_EXPOSURE_METADATA_FILE"))
+	if path == "" {
+		path = strings.TrimSpace(config.ExposureMetadataFile)
+	}
+	if path == "" {
+		return ""
+	}
+	if filepath.IsAbs(path) {
+		return path
+	}
+	return filepath.Join(GetConfigDir(), path)
 }
 
 func GetConfigDir() string {
