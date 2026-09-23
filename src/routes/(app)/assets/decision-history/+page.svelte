@@ -89,14 +89,10 @@
     {:else}
       <div class="decision-history-heading">
         <div>
-          <h1 class="title is-3 mb-2">Decision history</h1>
+          <h1 class="title is-3 mb-1">Decision history</h1>
           <p class="subtitle is-6 mb-0">
             Four manually curated decisions, kept separate from automatic performance reporting.
           </p>
-        </div>
-        <div class="curation-badge" data-testid="decision-history-source">
-          <span class="curation-dot" aria-hidden="true"></span>
-          <span>{isSynthetic ? "Synthetic fixture" : "Private adapter"}</span>
         </div>
       </div>
 
@@ -221,13 +217,6 @@
         </div>
       </div>
 
-      <div class="adapter-boundary">
-        <span class="icon is-small" aria-hidden="true"><i class="fas fa-shield-alt"></i></span>
-        <span>
-          Public UI contract: <code>decision-history/v1</code>. Raw Ledger transactions and source
-          statements stay behind the private adapter boundary.
-        </span>
-      </div>
     {/if}
   </div>
 </section>
@@ -236,7 +225,7 @@
   @import "bulma/sass/utilities/_all.sass";
 
   .decision-history-page {
-    padding-top: 2rem;
+    padding-top: 2.5rem;
     padding-bottom: 4rem;
   }
 
@@ -245,39 +234,20 @@
     align-items: flex-start;
     justify-content: space-between;
     gap: 2rem;
-    margin-bottom: 1.5rem;
+    margin-bottom: 1.25rem;
   }
 
   .decision-history-heading .subtitle {
-    color: $grey;
+    color: color-mix(in srgb, currentColor 68%, transparent);
     max-width: 48rem;
-  }
-
-  .curation-badge {
-    align-items: center;
-    border: 1px solid $grey-lighter;
-    border-radius: 999px;
-    color: $grey-dark;
-    display: inline-flex;
-    flex-shrink: 0;
-    font-size: 0.75rem;
-    gap: 0.5rem;
-    padding: 0.45rem 0.75rem;
-  }
-
-  .curation-dot {
-    background: $link;
-    border-radius: 50%;
-    height: 0.45rem;
-    width: 0.45rem;
   }
 
   .interpretation-note {
     align-items: flex-start;
-    background: rgba($link, 0.06);
-    border: 1px solid rgba($link, 0.18);
+    background: color-mix(in srgb, #{$link} 8%, transparent);
+    border: 1px solid color-mix(in srgb, #{$link} 24%, transparent);
     border-radius: $radius;
-    color: $grey-darker;
+    color: inherit;
     display: flex;
     gap: 0.75rem;
     line-height: 1.5;
@@ -312,7 +282,7 @@
 
   .index-heading {
     align-items: baseline;
-    border-bottom: 1px solid $grey-lighter;
+    border-bottom: 1px solid color-mix(in srgb, currentColor 18%, transparent);
     display: flex;
     justify-content: space-between;
     padding: 0 0.25rem 0.7rem;
@@ -355,13 +325,13 @@
   .history-index a:hover,
   .history-index a:focus-visible,
   .history-index a.active {
-    background: $white;
+    background: color-mix(in srgb, currentColor 7%, transparent);
     color: $link;
   }
 
   .history-index a:focus-visible,
   .history-index a.active {
-    box-shadow: 0 0 0 2px rgba($link, 0.22);
+    box-shadow: 0 0 0 2px color-mix(in srgb, #{$link} 36%, transparent);
     outline: none;
   }
 
@@ -403,20 +373,20 @@
   }
 
   .decision-case {
-    background: $white;
-    border: 1px solid $grey-lighter;
+    background: transparent;
+    border: 1px solid color-mix(in srgb, currentColor 18%, transparent);
     border-radius: $radius;
     scroll-margin-top: 1.25rem;
   }
 
   .decision-case.active-case {
     border-color: rgba($link, 0.5);
-    box-shadow: 0 0.5rem 1.5rem rgba($black, 0.05);
+    box-shadow: 0 0.5rem 1.5rem color-mix(in srgb, currentColor 10%, transparent);
   }
 
   .case-header {
     align-items: flex-start;
-    border-bottom: 1px solid $grey-lightest;
+    border-bottom: 1px solid color-mix(in srgb, currentColor 14%, transparent);
     display: grid;
     gap: 0.85rem;
     grid-template-columns: 2.25rem minmax(0, 1fr) auto;
@@ -440,8 +410,8 @@
   }
 
   .status-tag {
-    background: $white-ter;
-    border: 1px solid $grey-lighter;
+    background: color-mix(in srgb, currentColor 7%, transparent);
+    border: 1px solid color-mix(in srgb, currentColor 18%, transparent);
     border-radius: 999px;
     color: $grey-dark;
     font-size: 0.7rem;
@@ -482,12 +452,12 @@
   }
 
   .outcome-block {
-    border-top: 1px solid $grey-lightest;
+    border-top: 1px solid color-mix(in srgb, currentColor 14%, transparent);
     padding-top: 0.9rem;
   }
 
   .amount-panel {
-    background: $white-bis;
+    background: color-mix(in srgb, currentColor 5%, transparent);
     border-radius: $radius;
     display: grid;
     gap: 0.2rem;
@@ -592,25 +562,10 @@
     position: absolute;
   }
 
-  .adapter-boundary {
-    align-items: flex-start;
-    color: $grey;
-    display: flex;
-    font-size: 0.72rem;
-    gap: 0.5rem;
-    line-height: 1.45;
-    margin: 1.5rem 0.25rem 0;
-  }
-
-  .adapter-boundary .icon {
-    color: $grey-dark;
-    margin-top: 0.05rem;
-  }
-
   .decision-history-loading,
   .decision-history-empty {
-    background: $white;
-    border: 1px solid $grey-lighter;
+    background: transparent;
+    border: 1px solid color-mix(in srgb, currentColor 18%, transparent);
     border-radius: $radius;
     margin: 3rem auto;
     max-width: 42rem;
@@ -642,70 +597,9 @@
     max-width: 34rem;
   }
 
-  :global(html[data-theme="dark"]) {
-    .decision-history-heading .subtitle {
-      color: #aab5c8;
-    }
-
-    .curation-badge {
-      border-color: #465064;
-      color: #d7deeb;
-    }
-
-    .interpretation-note {
-      background: rgba(93, 121, 215, 0.16);
-      border-color: rgba(139, 164, 255, 0.42);
-      color: #dbe5ff;
-    }
-
-    .interpretation-note strong {
-      color: #f6f8ff;
-    }
-
-    .index-heading {
-      border-bottom-color: #465064;
-    }
-
-    .eyebrow,
-    .index-count,
-    .index-copy small,
-    .index-footnote,
-    .adapter-boundary {
-      color: #9da8bb;
-    }
-
-    .history-index a {
-      color: #d7deeb;
-    }
-
-    .history-index a:hover,
-    .history-index a:focus-visible,
-    .history-index a.active {
-      background: #202735;
-      color: #b5caff;
-    }
-
-    .history-index a:focus-visible,
-    .history-index a.active {
-      box-shadow: 0 0 0 2px rgba(139, 164, 255, 0.38);
-    }
-
-    .index-number {
-      color: #8793a8;
-    }
-
-    .index-footnote {
-      border-top-color: #465064;
-    }
-  }
-
   @media screen and (max-width: 768px) {
     .decision-history-heading {
       display: block;
-    }
-
-    .curation-badge {
-      margin-top: 1rem;
     }
 
     .history-layout {
@@ -713,7 +607,7 @@
     }
 
     .history-index {
-      background: $white-bis;
+      background: color-mix(in srgb, currentColor 5%, transparent);
       margin-bottom: 1.25rem;
       overflow-x: auto;
       position: static;
@@ -735,7 +629,7 @@
     }
 
     .history-index a {
-      border: 1px solid $grey-lighter;
+      border: 1px solid color-mix(in srgb, currentColor 18%, transparent);
       height: 100%;
     }
 
