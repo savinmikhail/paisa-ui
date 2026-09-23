@@ -4,7 +4,7 @@ import type { LayoutLoad } from "./$types";
 import { ajax, configUpdated, setNow } from "$lib/utils";
 
 export const load = (async ({ url }) => {
-  if (["networth-ticket-04", "resilience"].includes(url.searchParams.get("fixture"))) {
+  if (["networth-ticket-04", "resilience", "money-flow"].includes(url.searchParams.get("fixture"))) {
     globalThis.USER_CONFIG = {
       default_currency: "USD",
       readonly: true,

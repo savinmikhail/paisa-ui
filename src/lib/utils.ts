@@ -12,6 +12,7 @@ import chroma from "chroma-js";
 import { iconGlyph } from "./icon";
 import type { ExposureReport } from "./exposure";
 import type { ResilienceReport } from "./resilience";
+import type { MoneyFlowSource } from "./money_flow";
 
 export interface AutoCompleteItem {
   label: string;
@@ -698,6 +699,8 @@ export function ajax(route: "/api/networth"): Promise<{
 }>;
 export function ajax(route: "/api/networth/reconciliation"): Promise<NetworthReconciliation>;
 export function ajax(route: `/api/networth/reconciliation${string}`): Promise<NetworthReconciliation>;
+export function ajax(route: "/api/money_flow"): Promise<MoneyFlowSource>;
+export function ajax(route: `/api/money_flow${string}`): Promise<MoneyFlowSource>;
 export function ajax(route: "/api/gain"): Promise<{
   gain_breakdown: Gain[];
 }>;
