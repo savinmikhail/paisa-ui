@@ -1,5 +1,10 @@
 <script lang="ts">
-  import { baselineBarHeight, baselineChartMax, categorySignalLabel, commitmentCadence } from "$lib/expense_baseline";
+  import {
+    baselineBarHeight,
+    baselineChartMax,
+    categorySignalLabel,
+    commitmentCadence
+  } from "$lib/expense_baseline";
   import { formatCurrency, type ExpenseRetrospective } from "$lib/utils";
 
   export let data: ExpenseRetrospective;
@@ -19,35 +24,72 @@
 >
   <div class="retrospective-heading">
     <div>
-      <h2 id="expense-retrospective-title" class="title is-5 mb-1">Personal expense retrospective</h2>
+      <h2 id="expense-retrospective-title" class="title is-5 mb-1">
+        Personal expense retrospective
+      </h2>
       <p class="has-text-grey">
         Six complete months · Personal Expense excludes business, tax, and Capital Placement.
       </p>
     </div>
-    <span class="tag is-light">{data.start_date.format("MMM YYYY")} — {data.end_date.subtract(1, "day").format("MMM YYYY")}</span>
+    <span class="tag is-light"
+      >{data.start_date.format("MMM YYYY")} — {data.end_date
+        .subtract(1, "day")
+        .format("MMM YYYY")}</span
+    >
   </div>
 
   <div class="retrospective-overview">
     <div class="baseline-panel">
       <div class="panel-heading">
-        <span>Monthly baseline</span>
-        <span class="legend-inline"><i class="legend-swatch personal" /> Personal Expense <i class="legend-swatch regular" /> Regular burn</span>
+        <span class="has-text-grey-dark">Monthly baseline</span>
+        <span class="legend-inline has-text-grey">
+          <i class="legend-swatch personal has-background-danger" /> Personal Expense
+          <i class="legend-swatch regular has-background-info" /> Regular burn
+        </span>
       </div>
-      <div class="baseline-chart" aria-label="Six-month personal expense baseline">
+      <div
+        class="baseline-chart"
+        role="img"
+        aria-label="Six-month personal expense baseline"
+        aria-describedby="baseline-values"
+      >
         <div class="median-rule" style={`bottom: ${height(data.personal_expense_median)}`}>
-          <span>6m median {formatCurrency(data.personal_expense_median)}</span>
+          <span class="has-text-grey-dark"
+            >6m median {formatCurrency(data.personal_expense_median)}</span
+          >
         </div>
         {#each data.months as month}
           <div class="month-column">
             <div class="bar-pair">
-              <div class="bar personal" style={`height: ${height(month.personal_expense)}`} title={`Personal Expense ${formatCurrency(month.personal_expense)}`} />
-              <div class="bar regular" style={`height: ${height(month.regular_personal_burn)}`} title={`Regular burn ${formatCurrency(month.regular_personal_burn)}`} />
+              <div
+                class="bar personal has-background-danger"
+                aria-hidden="true"
+                style={`height: ${height(month.personal_expense)}`}
+                title={`Personal Expense ${formatCurrency(month.personal_expense)}`}
+              />
+              <div
+                class="bar regular has-background-info"
+                aria-hidden="true"
+                style={`height: ${height(month.regular_personal_burn)}`}
+                title={`Regular burn ${formatCurrency(month.regular_personal_burn)}`}
+              />
             </div>
-            <span class="month-label">{month.date.format("MMM")}</span>
+            <span class="month-label has-text-grey-dark" aria-hidden="true"
+              >{month.date.format("MMM")}</span
+            >
           </div>
         {/each}
       </div>
-      <div class="chart-footnote">
+      <ul id="baseline-values" class="is-sr-only">
+        {#each data.months as month}
+          <li>
+            {month.date.format("MMM YYYY")}: Personal Expense {formatCurrency(
+              month.personal_expense
+            )}; Regular burn {formatCurrency(month.regular_personal_burn)}.
+          </li>
+        {/each}
+      </ul>
+      <div class="chart-footnote has-text-grey">
         Latest month: <strong>{formatCurrency(latestMonth.personal_expense)}</strong> personal ·
         <strong>{formatCurrency(latestMonth.regular_personal_burn)}</strong> regular
       </div>
@@ -55,14 +97,14 @@
 
     <div class="metric-stack" aria-label="Expense baseline metrics">
       <div class="metric-row">
-        <span>Personal Expense median</span>
+        <span class="has-text-grey-dark">Personal Expense median</span>
         <strong>{formatCurrency(data.personal_expense_median)}</strong>
-        <small>includes confirmed one-offs</small>
+        <small class="has-text-grey">includes confirmed one-offs</small>
       </div>
-      <div class="metric-row accent">
-        <span>Regular Personal Burn</span>
+      <div class="metric-row accent has-background-info-light">
+        <span class="has-text-grey-dark">Regular Personal Burn</span>
         <strong>{formatCurrency(data.regular_personal_burn_median)}</strong>
-        <small>one-offs excluded</small>
+        <small class="has-text-grey">one-offs excluded</small>
       </div>
     </div>
   </div>
@@ -79,8 +121,11 @@
         {#each data.category_signals as signal}
           <div class="signal-row">
             <span class="signal-name">{signal.category}</span>
-            <span class="signal-values">{formatCurrency(signal.current)} <span class="has-text-grey">vs {formatCurrency(signal.baseline_median)}</span></span>
-            <span class="signal-delta">{categorySignalLabel(signal)}</span>
+            <span class="signal-values"
+              >{formatCurrency(signal.current)}
+              <span class="has-text-grey">vs {formatCurrency(signal.baseline_median)}</span></span
+            >
+            <span class="signal-delta has-text-warning">{categorySignalLabel(signal)}</span>
           </div>
         {/each}
       {/if}
@@ -88,7 +133,7 @@
 
     <div class="signal-panel">
       <div class="panel-heading">
-        <span>Recurring commitments</span>
+        <span class="has-text-grey-dark">Recurring commitments</span>
         <a class="secondary-link is-size-7" href="/cash_flow/recurring">View all</a>
       </div>
       {#if data.recurring_commitments.length === 0}
@@ -107,18 +152,34 @@
 
   <div class="evidence-grid">
     <div>
-      <div class="panel-heading"><span>Excluded from Personal Expense</span><span class="has-text-grey is-size-7">still accounted for elsewhere</span></div>
+      <div class="panel-heading">
+        <span class="has-text-grey-dark">Excluded from Personal Expense</span><span
+          class="has-text-grey is-size-7">still accounted for elsewhere</span
+        >
+      </div>
       <div class="evidence-list">
         {#each data.excluded as item}
-          <div class="evidence-row"><span>{item.label}</span><strong>{formatCurrency(item.amount)}</strong><small>{item.count} {item.count === 1 ? "flow" : "flows"}</small></div>
+          <div class="evidence-row">
+            <span>{item.label}</span><strong>{formatCurrency(item.amount)}</strong><small
+              >{item.count} {item.count === 1 ? "flow" : "flows"}</small
+            >
+          </div>
         {/each}
       </div>
     </div>
     <div>
-      <div class="panel-heading"><span>One-offs stay visible</span><span class="has-text-grey is-size-7">excluded from regular burn</span></div>
+      <div class="panel-heading">
+        <span class="has-text-grey-dark">One-offs stay visible</span><span
+          class="has-text-grey is-size-7">excluded from regular burn</span
+        >
+      </div>
       <div class="evidence-list">
         {#each data.one_offs as oneOff}
-          <div class="evidence-row"><span><strong>{oneOff.category}</strong> · {oneOff.posting.payee}</span><strong>{formatCurrency(oneOff.posting.amount)}</strong><small>confirmed one-off</small></div>
+          <div class="evidence-row">
+            <span><strong>{oneOff.category}</strong> · {oneOff.posting.payee}</span><strong
+              >{formatCurrency(oneOff.posting.amount)}</strong
+            ><small>confirmed one-off</small>
+          </div>
         {/each}
       </div>
     </div>
@@ -128,8 +189,7 @@
 <style>
   .expense-retrospective {
     padding: 1.25rem;
-    border: 1px solid rgba(122, 132, 148, 0.22);
-    background: rgba(255, 255, 255, 0.72);
+    border: 1px solid var(--bulma-border);
   }
 
   .retrospective-heading,
@@ -160,19 +220,17 @@
 
   .baseline-panel {
     position: relative;
-    border-top: 1px solid rgba(122, 132, 148, 0.22);
+    border-top: 1px solid var(--bulma-border);
     padding-top: 0.75rem;
   }
 
   .panel-heading {
-    color: #475569;
     font-size: 0.8rem;
     font-weight: 600;
     margin-bottom: 0.65rem;
   }
 
   .legend-inline {
-    color: #64748b;
     font-size: 0.7rem;
     font-weight: 400;
     white-space: nowrap;
@@ -186,16 +244,6 @@
     border-radius: 2px;
   }
 
-  .legend-swatch.personal,
-  .bar.personal {
-    background: #e76f51;
-  }
-
-  .legend-swatch.regular,
-  .bar.regular {
-    background: #264653;
-  }
-
   .baseline-chart {
     position: relative;
     display: flex;
@@ -203,14 +251,14 @@
     gap: 0.65rem;
     height: 168px;
     padding: 0.75rem 0.5rem 1.35rem;
-    border-bottom: 1px solid rgba(122, 132, 148, 0.22);
+    border-bottom: 1px solid var(--bulma-border);
   }
 
   .median-rule {
     position: absolute;
     left: 0.5rem;
     right: 0.5rem;
-    border-top: 1px dashed rgba(38, 70, 83, 0.42);
+    border-top: 1px dashed var(--bulma-border);
     pointer-events: none;
   }
 
@@ -218,7 +266,6 @@
     position: absolute;
     top: -1.1rem;
     right: 0;
-    color: #264653;
     font-size: 0.65rem;
   }
 
@@ -252,13 +299,11 @@
   .month-label {
     position: absolute;
     bottom: -1.1rem;
-    color: #64748b;
     font-size: 0.7rem;
   }
 
   .chart-footnote {
     margin-top: 0.7rem;
-    color: #64748b;
     font-size: 0.75rem;
   }
 
@@ -273,13 +318,8 @@
     grid-template-columns: 1fr auto;
     gap: 0.1rem 0.75rem;
     padding: 0.85rem 0.95rem;
-    border: 1px solid rgba(122, 132, 148, 0.22);
+    border: 1px solid var(--bulma-border);
     border-radius: 8px;
-  }
-
-  .metric-row span,
-  .metric-row small {
-    color: #64748b;
   }
 
   .metric-row span {
@@ -287,7 +327,6 @@
   }
 
   .metric-row strong {
-    color: #1e293b;
     font-size: 1.2rem;
     font-variant-numeric: tabular-nums;
   }
@@ -298,8 +337,7 @@
   }
 
   .metric-row.accent {
-    background: rgba(38, 70, 83, 0.06);
-    border-color: rgba(38, 70, 83, 0.25);
+    border-color: var(--bulma-info);
   }
 
   .signal-grid,
@@ -312,38 +350,34 @@
 
   .signal-panel,
   .evidence-grid > div {
-    border-top: 1px solid rgba(122, 132, 148, 0.22);
+    border-top: 1px solid var(--bulma-border);
     padding-top: 0.75rem;
   }
 
   .signal-row,
   .evidence-row {
     padding: 0.45rem 0;
-    border-bottom: 1px solid rgba(122, 132, 148, 0.14);
+    border-bottom: 1px solid var(--bulma-border);
     font-size: 0.78rem;
   }
 
   .signal-name {
-    color: #1e293b;
     font-weight: 600;
   }
 
   .signal-values {
     margin-left: auto;
-    color: #1e293b;
     font-variant-numeric: tabular-nums;
   }
 
   .signal-delta {
     min-width: 7.5rem;
-    color: #b45309;
     text-align: right;
     font-size: 0.7rem;
     font-weight: 600;
   }
 
   .evidence-row small {
-    color: #64748b;
     font-size: 0.7rem;
   }
 
