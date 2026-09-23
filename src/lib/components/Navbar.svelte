@@ -111,6 +111,7 @@
       ]
     },
     { label: "Income", href: "/income" },
+    { label: "Resilience", href: "/resilience", tag: "preview" },
     {
       label: "Ledger",
       href: "/ledger",

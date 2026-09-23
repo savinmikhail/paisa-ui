@@ -11,6 +11,7 @@ import { goto } from "$app/navigation";
 import chroma from "chroma-js";
 import { iconGlyph } from "./icon";
 import type { ExposureReport } from "./exposure";
+import type { ResilienceReport } from "./resilience";
 
 export interface AutoCompleteItem {
   label: string;
@@ -880,6 +881,7 @@ export function ajax(
 
 export function ajax(route: "/api/ping"): Promise<{ success: boolean; error?: string }>;
 export function ajax(route: "/api/exposure"): Promise<ExposureReport>;
+export function ajax(route: "/api/resilience"): Promise<ResilienceReport>;
 
 export async function ajax(
   route: string,

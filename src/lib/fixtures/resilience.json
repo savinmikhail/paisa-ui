@@ -1,0 +1,38 @@
+{
+  "contract_version": "resilience.v1",
+  "source": "synthetic-fixture",
+  "as_of": "2025-06-30",
+  "base_currency": "RUB",
+  "range_start": "2025-01-01T00:00:00Z",
+  "range_end": "2025-06-01T00:00:00Z",
+  "liquid_scope": {
+    "included": [
+      { "name": "Checking", "kind": "cash account", "currency": "RUB", "reason": "operational liquidity" },
+      { "name": "Savings", "kind": "cash account", "currency": "RUB", "reason": "available reserve" },
+      { "name": "Cash", "kind": "cash account", "currency": "RUB", "reason": "available reserve" },
+      { "name": "Reserve Asset USDT", "kind": "reserve asset", "currency": "USDT", "reason": "deliberate liquid reserve inclusion" }
+    ],
+    "excluded": [
+      { "name": "Investments", "kind": "investment account", "currency": "mixed", "reason": "not liquid runway" },
+      { "name": "IIS", "kind": "locked investment account", "currency": "RUB", "reason": "locked / restricted access" },
+      { "name": "Receivables", "kind": "receivable", "currency": "mixed", "reason": "not accessible cash" }
+    ]
+  },
+  "burn_provenance": {
+    "metric": "RegularPersonalBurnMedian",
+    "source": "ExpenseBaseline.RegularPersonalBurnMedian",
+    "value": 30000,
+    "currency": "RUB",
+    "period_start": "2024-07-01T00:00:00Z",
+    "period_end": "2025-01-01T00:00:00Z",
+    "description": "Median of six complete months of regular personal burn; one-offs and excluded classes are outside this denominator."
+  },
+  "points": [
+    { "date": "2025-01-01T00:00:00Z", "rub": 720000, "usd": 9000, "life_months": 24 },
+    { "date": "2025-02-01T00:00:00Z", "rub": 690000, "usd": 8800, "life_months": 23 },
+    { "date": "2025-03-01T00:00:00Z", "rub": 750000, "usd": 9200, "life_months": 25 },
+    { "date": "2025-04-01T00:00:00Z", "rub": 710000, "usd": 9000, "life_months": 23.666666666666668 },
+    { "date": "2025-05-01T00:00:00Z", "rub": 680000, "usd": 8600, "life_months": 22.666666666666668 },
+    { "date": "2025-06-01T00:00:00Z", "rub": 760000, "usd": 9500, "life_months": 25.333333333333332 }
+  ]
+}
