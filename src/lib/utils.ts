@@ -319,6 +319,35 @@ export interface Income {
   postings: Posting[];
 }
 
+export interface IncomeBaselinePoint {
+  date: dayjs.Dayjs;
+  amount: number;
+}
+
+export interface PassiveIncomePoint {
+  date: dayjs.Dayjs;
+  interest: number;
+  coupons: number;
+  dividends: number;
+  total: number;
+}
+
+export interface PassiveIncomeWindow {
+  total: number;
+  average: number;
+  coverage_regular_personal_burn: number;
+  coverage_freedom_income_floor: number;
+}
+
+export interface PassiveIncomeAnalysis {
+  timeline: PassiveIncomePoint[];
+  current_month: PassiveIncomeWindow;
+  trailing_3_months: PassiveIncomeWindow;
+  trailing_12_months: PassiveIncomeWindow;
+  regular_personal_burn: number;
+  freedom_income_floor: number;
+}
+
 export interface Tax {
   start_date: string;
   end_date: string;
@@ -704,6 +733,10 @@ export function ajax(route: "/api/income"): Promise<{
   income_timeline: Income[];
   tax_timeline: Tax[];
   yearly_cards: IncomeYearlyCard[];
+}>;
+export function ajax(route: "/api/income/analysis"): Promise<{
+  income_baseline: IncomeBaselinePoint[];
+  passive_income: PassiveIncomeAnalysis;
 }>;
 export function ajax(route: "/api/expense"): Promise<ExpenseResponse>;
 

@@ -9,6 +9,7 @@ package reporting
 import (
 	"errors"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/ananthakumaran/paisa/internal/model/posting"
@@ -62,14 +63,15 @@ func MonthPeriods(p Period) []Period {
 type Report string
 
 const (
-	IncomeReport            Report = "income"
-	ExpenseReport           Report = "expenses"
-	TaxReport               Report = "tax"
-	PassiveIncomeReport     Report = "passive_income"
-	CapitalGainsReport      Report = "capital_gains"
-	InternalTransfersReport Report = "internal_transfers"
-	RefundsReport           Report = "refunds"
-	AssetMovementsReport    Report = "asset_movements"
+	IncomeReport              Report = "income"
+	ExpenseReport             Report = "expenses"
+	TaxReport                 Report = "tax"
+	PassiveIncomeReport       Report = "passive_income"
+	RegularPersonalBurnReport Report = "regular_personal_burn"
+	CapitalGainsReport        Report = "capital_gains"
+	InternalTransfersReport   Report = "internal_transfers"
+	RefundsReport             Report = "refunds"
+	AssetMovementsReport      Report = "asset_movements"
 )
 
 type Kind string
@@ -81,6 +83,14 @@ const (
 	InternalTransferKind Kind = "internal_transfer"
 	AssetMovementKind    Kind = "asset_movement"
 	OtherKind            Kind = "other"
+)
+
+type PassiveIncomeCategory string
+
+const (
+	PassiveInterestCategory  PassiveIncomeCategory = "interest"
+	PassiveCouponsCategory   PassiveIncomeCategory = "coupons"
+	PassiveDividendsCategory PassiveIncomeCategory = "dividends"
 )
 
 // Provenance identifies the source posting without copying or normalizing its
@@ -128,9 +138,65 @@ func IsExpense(p posting.Posting) bool {
 	return AccountOrChild(p.Account, "Expenses") && !IsTax(p)
 }
 
+func IsInterest(p posting.Posting) bool {
+	return AccountOrChild(p.Account, "Income:Interest") && !IsCoupon(p)
+}
+
+func IsCoupon(p posting.Posting) bool {
+	return AccountOrChild(p.Account, "Income:Coupon") ||
+		AccountOrChild(p.Account, "Income:Interest:Investments:Coupons")
+}
+
+func IsDividend(p posting.Posting) bool {
+	return AccountOrChild(p.Account, "Income:Dividend")
+}
+
+func PassiveIncomeCategoryFor(p posting.Posting) (PassiveIncomeCategory, bool) {
+	switch {
+	case IsCoupon(p):
+		return PassiveCouponsCategory, true
+	case IsInterest(p):
+		return PassiveInterestCategory, true
+	case IsDividend(p):
+		return PassiveDividendsCategory, true
+	default:
+		return "", false
+	}
+}
+
 func IsPassiveIncome(p posting.Posting) bool {
-	return AccountOrChild(p.Account, "Income:Interest") ||
-		AccountOrChild(p.Account, "Income:Dividend")
+	_, ok := PassiveIncomeCategoryFor(p)
+	return ok
+}
+
+var regularPersonalBurnExcludedRoots = []string{
+	"Expenses:Business",
+	"Expenses:Investments",
+	"Expenses:Tax",
+	"Expenses:Мошенничество",
+	"Expenses:Наличные:Неразобранное",
+	"Expenses:Семейный бизнес",
+}
+
+func hasOneOffBurnClass(p posting.Posting) bool {
+	const marker = "burn-class: one-off"
+	return strings.Contains(p.Note, marker) || strings.Contains(p.TransactionNote, marker)
+}
+
+// IsRegularPersonalBurn follows the existing household-burn boundary: all
+// Expenses postings except explicitly excluded business, investment, tax,
+// fraud, unclassified-cash, and family-business branches. A posting marked
+// burn-class: one-off is excluded only from this report.
+func IsRegularPersonalBurn(p posting.Posting) bool {
+	if !AccountOrChild(p.Account, "Expenses") || hasOneOffBurnClass(p) {
+		return false
+	}
+	for _, root := range regularPersonalBurnExcludedRoots {
+		if AccountOrChild(p.Account, root) {
+			return false
+		}
+	}
+	return true
 }
 
 func IsCapitalGain(p posting.Posting) bool {
@@ -159,6 +225,8 @@ func Matches(report Report, p posting.Posting) bool {
 		return IsTax(p)
 	case PassiveIncomeReport:
 		return IsPassiveIncome(p)
+	case RegularPersonalBurnReport:
+		return IsRegularPersonalBurn(p)
 	case CapitalGainsReport:
 		return IsCapitalGain(p)
 	case InternalTransfersReport:

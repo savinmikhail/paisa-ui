@@ -20,16 +20,17 @@ caller must opt in with `IncludeForecast`.
 
 ## Account-path rules
 
-| Report | Existing predicate | Notes |
-| --- | --- | --- |
-| Income | `Income:*` | Includes capital gains and refunds, as the current income report does. |
-| Expenses | `Expenses:*` except `Expenses:Tax:*` | Tax is reported separately. |
-| Tax | `Expenses:Tax:*` | Uses the built-in Paisa tax prefix. |
-| Passive income | `Income:Interest:*` or `Income:Dividend:*` | Unrealized FX and market revaluation are not included. |
-| Capital gains | `service.IsCapitalGains` | Uses the existing `Income:CapitalGains:*` service rule. |
-| Refunds | `service.IsRefund` | Keeps the original `Income:Refund:*` posting visible. |
-| Internal transfers | `Equity:Transfers:*` | Never becomes income or expense. |
-| Asset movements | `Assets:*` | This is intentionally broad; it does not decide Asset Movement versus Capital Placement. |
+| Report                | Existing predicate                                                                                                                                                                           | Notes                                                                                                                                 |
+| --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| Income                | `Income:*`                                                                                                                                                                                   | Includes capital gains and refunds, as the current income report does.                                                                |
+| Expenses              | `Expenses:*` except `Expenses:Tax:*`                                                                                                                                                         | Tax is reported separately.                                                                                                           |
+| Tax                   | `Expenses:Tax:*`                                                                                                                                                                             | Uses the built-in Paisa tax prefix.                                                                                                   |
+| Passive income        | `Income:Interest:*` except `Income:Interest:Investments:Coupons:*`, `Income:Coupon:*`, or `Income:Dividend:*`                                                                                | Real Ledger coupons use the nested `Income:Interest:Investments:Coupons` path; unrealized FX and market revaluation are not included. |
+| Regular personal burn | All `Expenses:*` except `Expenses:Business:*`, `Expenses:Investments:*`, `Expenses:Tax:*`, `Expenses:Мошенничество:*`, `Expenses:Наличные:Неразобранное:*`, and `Expenses:Семейный бизнес:*` | Postings with `burn-class: one-off` in `Posting.Note` or `TransactionNote` are excluded only from this baseline.                      |
+| Capital gains         | `service.IsCapitalGains`                                                                                                                                                                     | Uses the existing `Income:CapitalGains:*` service rule.                                                                               |
+| Refunds               | `service.IsRefund`                                                                                                                                                                           | Keeps the original `Income:Refund:*` posting visible.                                                                                 |
+| Internal transfers    | `Equity:Transfers:*`                                                                                                                                                                         | Never becomes income or expense.                                                                                                      |
+| Asset movements       | `Assets:*`                                                                                                                                                                                   | This is intentionally broad; it does not decide Asset Movement versus Capital Placement.                                              |
 
 Each result retains the complete source posting plus explicit account-path,
 transaction, file, and line-range provenance. Consumers can therefore link a
@@ -45,3 +46,13 @@ it is not a new Ledger posting or classification. The current seam can identify
 realized capital gains and explicit debt legs, while valuation changes without a
 source-level market/FX event remain residual until a later source model adds
 that provenance.
+
+Passive income is categorized as `interest`, `coupons`, or `dividends` at the
+seam. The income analysis adapter also derives a Freedom Income Floor from the
+first configured retirement goal's `yearly_expenses / 12`; when no such goal is
+configured, the floor remains zero and its coverage is not claimed.
+
+The seam does not yet define arbitrary Net Worth
+range calculations, FX/market/debt decomposition, liquidity policy, or the
+distinction between Asset Movement and Capital Placement. Those are derived
+views for later tickets and must not be smuggled into this compatibility layer.

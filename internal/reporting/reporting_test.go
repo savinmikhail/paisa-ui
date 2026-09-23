@@ -1,6 +1,8 @@
 package reporting
 
 import (
+	"encoding/json"
+	"os"
 	"testing"
 	"time"
 
@@ -70,17 +72,61 @@ func TestAccountPathReportsReuseExistingSemantics(t *testing.T) {
 		reportingPosting(7, "2024-01-08", "Equity:Transfers:Cleared", "100"),
 		reportingPosting(8, "2024-01-09", "Income:Refund:CreditCard", "-20"),
 		reportingPosting(9, "2024-01-10", "Assets:Checking:TBank", "1000"),
+		reportingPosting(10, "2024-01-11", "Expenses:Personal:Food", "30"),
 	}
 	period := reportingPeriod(t, "2024-01-01", "2024-02-01")
 
 	assert.Equal(t, []uint{1, 4, 5, 6, 8}, ids(SelectReport(postings, period, Options{}, IncomeReport)))
-	assert.Equal(t, []uint{2}, ids(SelectReport(postings, period, Options{}, ExpenseReport)))
+	assert.Equal(t, []uint{2, 10}, ids(SelectReport(postings, period, Options{}, ExpenseReport)))
 	assert.Equal(t, []uint{3}, ids(SelectReport(postings, period, Options{}, TaxReport)))
 	assert.Equal(t, []uint{4, 5}, ids(SelectReport(postings, period, Options{}, PassiveIncomeReport)))
+	assert.Equal(t, []uint{2, 10}, ids(SelectReport(postings, period, Options{}, RegularPersonalBurnReport)))
 	assert.Equal(t, []uint{6}, ids(SelectReport(postings, period, Options{}, CapitalGainsReport)))
 	assert.Equal(t, []uint{7}, ids(SelectReport(postings, period, Options{}, InternalTransfersReport)))
 	assert.Equal(t, []uint{8}, ids(SelectReport(postings, period, Options{}, RefundsReport)))
 	assert.Equal(t, []uint{9}, ids(SelectReport(postings, period, Options{}, AssetMovementsReport)))
+}
+
+type incomeSemanticsFixture struct {
+	Postings                    []posting.Posting `json:"postings"`
+	ExpectedRegularPersonalBurn []uint            `json:"expected_regular_personal_burn_ids"`
+	ExpectedPassiveCoupons      []uint            `json:"expected_passive_coupon_ids"`
+	ExpectedPassiveInterest     []uint            `json:"expected_passive_interest_ids"`
+}
+
+func TestIncomeSemanticsFixtureCoversRealCouponsAndRegularBurn(t *testing.T) {
+	fixtureBytes, err := os.ReadFile("testdata/income-semantics.json")
+	require.NoError(t, err)
+	var fixture incomeSemanticsFixture
+	require.NoError(t, json.Unmarshal(fixtureBytes, &fixture))
+
+	period := reportingPeriod(t, "2024-01-01", "2024-02-01")
+	assert.Equal(
+		t,
+		fixture.ExpectedRegularPersonalBurn,
+		ids(SelectReport(fixture.Postings, period, Options{}, RegularPersonalBurnReport)),
+	)
+	assert.Equal(
+		t,
+		append(append([]uint{}, fixture.ExpectedPassiveCoupons...), fixture.ExpectedPassiveInterest...),
+		ids(SelectReport(fixture.Postings, period, Options{}, PassiveIncomeReport)),
+	)
+
+	for _, id := range fixture.ExpectedPassiveCoupons {
+		p := fixture.Postings[id-1]
+		category, ok := PassiveIncomeCategoryFor(p)
+		require.True(t, ok)
+		assert.Equal(t, PassiveCouponsCategory, category)
+	}
+	for _, id := range fixture.ExpectedPassiveInterest {
+		category, ok := PassiveIncomeCategoryFor(fixture.Postings[id-1])
+		require.True(t, ok)
+		assert.Equal(t, PassiveInterestCategory, category)
+	}
+
+	expenseIDs := ids(SelectReport(fixture.Postings, period, Options{}, ExpenseReport))
+	assert.Contains(t, expenseIDs, uint(8), "one-off remains an expense outside burn reporting")
+	assert.Contains(t, expenseIDs, uint(9), "transaction-level one-off remains an expense")
 }
 
 func TestSelectionExcludesForecastUnlessExplicitlyIncluded(t *testing.T) {

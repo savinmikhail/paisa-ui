@@ -1,6 +1,7 @@
 import * as d3 from "d3";
-import type dayjs from "dayjs";
+import dayjs from "dayjs";
 import _ from "lodash";
+import COLORS, { generateColorScheme } from "./colors";
 import {
   formatCurrency,
   formatCurrencyCrude,
@@ -11,10 +12,13 @@ import {
   skipTicks,
   tooltip,
   type IncomeYearlyCard,
-  type Legend
+  type Legend,
+  type PassiveIncomeAnalysis
 } from "./utils";
-import { generateColorScheme } from "./colors";
 import { incomeTimelineDomain } from "./income_scale";
+import { incomeGroup, rollingMedian, selectedIncomeTotals } from "./income_reporting";
+
+export { incomeGroup } from "./income_reporting";
 
 export { incomeTimelineDomain } from "./income_scale";
 
@@ -86,6 +90,12 @@ function renderIncomeTimeline(incomes: Income[], id: string, timeFormat: string)
   const xAxis = g.append("g").attr("class", "axis x");
   const yAxis = g.append("g").attr("class", "axis y");
   const bars = g.append("g");
+  const medianPath = g
+    .append("path")
+    .attr("fill", "none")
+    .attr("stroke", COLORS.danger)
+    .attr("stroke-width", 2)
+    .attr("stroke-dasharray", "7,5");
 
   const tooltipContent = (visibleGroups: string[]) => (d: any) => {
     const postings = _.filter((d.data as unknown as { postings: Posting[] }).postings, (posting) =>
@@ -106,9 +116,20 @@ function renderIncomeTimeline(incomes: Income[], id: string, timeFormat: string)
   };
 
   let firstRender = true;
+  let showMedian = true;
   const render = (visibleGroups: string[]) => {
     x.domain(points.map((p) => p.month));
-    y.domain(incomeTimelineDomain(points, visibleGroups));
+    const selectedTotals = selectedIncomeTotals(incomes, visibleGroups);
+    const medians = rollingMedian(selectedTotals, 4);
+    const actualDomain = incomeTimelineDomain(points, visibleGroups);
+    const medianValues = medians.filter((value): value is number => value !== null);
+    const medianMin = medianValues.length ? Math.min(...medianValues) : 0;
+    const medianMax = medianValues.length ? Math.max(...medianValues) : 0;
+    const domain: [number, number] = [
+      Math.min(actualDomain[0], medianMin),
+      Math.max(actualDomain[1], medianMax)
+    ];
+    y.domain(domain[0] === domain[1] ? [0, 1] : domain);
 
     const transition = svg.transition().duration(firstRender ? 0 : 350);
     firstRender = false;
@@ -165,6 +186,16 @@ function renderIncomeTimeline(incomes: Income[], id: string, timeFormat: string)
       .attr("y", (d: any) => y(d[1]))
       .attr("height", (d: any) => y(d[0]) - y(d[1]))
       .attr("width", Math.min(x.bandwidth(), MAX_BAR_WIDTH));
+
+    const line = d3
+      .line<{ month: string; median: number | null }>()
+      .defined((d) => d.median !== null)
+      .x((d) => x(d.month) + x.bandwidth() / 2)
+      .y((d) => y(d.median as number));
+    medianPath
+      .datum(points.map((point, index) => ({ month: point.month, median: medians[index] })))
+      .attr("display", showMedian ? null : "none")
+      .attr("d", line);
   };
 
   const visibleGroups = new Set(groupKeys);
@@ -184,6 +215,18 @@ function renderIncomeTimeline(incomes: Income[], id: string, timeFormat: string)
         render(groupKeys.filter((group) => visibleGroups.has(group)));
       }
     } as Legend;
+  });
+
+  legends.push({
+    label: "4-month rolling median",
+    color: COLORS.danger,
+    shape: "line",
+    toggle: true,
+    selected: true,
+    onClick: (legend: Legend) => {
+      showMedian = legend.selected;
+      render(groupKeys.filter((group) => visibleGroups.has(group)));
+    }
   });
 
   render(groupKeys);
@@ -398,6 +441,167 @@ export function renderYearlyTimelineOf(
   }));
 }
 
-export function incomeGroup(posting: Posting) {
-  return secondName(posting.account);
+export function renderPassiveIncomeTimeline(report: PassiveIncomeAnalysis): Legend[] {
+  const id = "#d3-passive-income-timeline";
+  const svg = d3.select(id);
+  const element = document.getElementById(id.substring(1));
+  if (!element || !element.parentElement || report.timeline.length === 0) {
+    return [];
+  }
+
+  const margin = { top: 20, right: 30, bottom: 80, left: 55 };
+  const width = element.parentElement.clientWidth - margin.left - margin.right;
+  const height = +svg.attr("height") - margin.top - margin.bottom;
+  const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
+  const sourceKeys = ["interest", "coupons", "dividends"] as const;
+  const sourceLabels: Record<(typeof sourceKeys)[number], string> = {
+    interest: "Interest",
+    coupons: "Coupons",
+    dividends: "Dividends"
+  };
+  const sourceColors: Record<(typeof sourceKeys)[number], string> = {
+    interest: COLORS.primary,
+    coupons: COLORS.secondary,
+    dividends: COLORS.tertiary
+  };
+  const points = report.timeline.map((point) => ({
+    ...point,
+    month: dayjs(point.date).format("MMM-YYYY")
+  }));
+  const x = d3.scaleBand<string>().range([0, width]).paddingInner(0.12);
+  const y = d3.scaleLinear().range([height, 0]);
+  const xAxis = g.append("g").attr("class", "axis x");
+  const yAxis = g.append("g").attr("class", "axis y");
+  const bars = g.append("g");
+  const benchmarks = g.append("g");
+  const visibleSources = new Set<string>(sourceKeys);
+  const visibleBenchmarks = new Set(["regular_personal_burn", "freedom_income_floor"]);
+  let firstRender = true;
+
+  const render = () => {
+    x.domain(points.map((point) => point.month));
+    const actualTotals = points.map((point) =>
+      sourceKeys.reduce((total, key) => total + (visibleSources.has(key) ? point[key] : 0), 0)
+    );
+    const benchmarkValues = [
+      visibleBenchmarks.has("regular_personal_burn") ? report.regular_personal_burn : 0,
+      visibleBenchmarks.has("freedom_income_floor") ? report.freedom_income_floor : 0
+    ];
+    y.domain([0, Math.max(1, ...actualTotals, ...benchmarkValues)]);
+    const transition = svg.transition().duration(firstRender ? 0 : 350);
+    firstRender = false;
+
+    xAxis
+      .attr("transform", `translate(0,${height})`)
+      .transition(transition)
+      .call(
+        d3
+          .axisBottom(x)
+          .ticks(6)
+          .tickFormat(skipTicks(30, x, (d) => d.toString()))
+      )
+      .selectAll("text")
+      .attr("y", 10)
+      .attr("x", -8)
+      .attr("dy", ".35em")
+      .attr("transform", "rotate(-45)")
+      .style("text-anchor", "end");
+
+    yAxis
+      .transition(transition)
+      .call(d3.axisLeft(y).tickSize(-width).tickFormat(formatCurrencyCrude));
+
+    bars
+      .selectAll("g")
+      .data(
+        d3.stack().keys([...visibleSources])(points as unknown as Array<Record<string, number>>),
+        (d: any) => d.key
+      )
+      .join(
+        (enter) => enter.append("g"),
+        (update) => update,
+        (exit) => exit.remove()
+      )
+      .attr("fill", (d: any) => sourceColors[d.key as (typeof sourceKeys)[number]])
+      .selectAll("rect")
+      .data(
+        (d: any) => d,
+        (d: any) => d.data.month
+      )
+      .join("rect")
+      .attr("x", (d: any) => x(d.data.month))
+      .attr("y", (d: any) => y(d[1]))
+      .attr("height", (d: any) => y(d[0]) - y(d[1]))
+      .attr("width", x.bandwidth());
+
+    const benchmarkLine = d3
+      .line<{ month: string; value: number }>()
+      .x((d) => x(d.month) + x.bandwidth() / 2)
+      .y((d) => y(d.value));
+    benchmarks
+      .selectAll("path")
+      .data(
+        [
+          {
+            key: "regular_personal_burn",
+            value: report.regular_personal_burn,
+            color: COLORS.lossText
+          },
+          {
+            key: "freedom_income_floor",
+            value: report.freedom_income_floor,
+            color: COLORS.gainText
+          }
+        ].filter((benchmark) => visibleBenchmarks.has(benchmark.key))
+      )
+      .join("path")
+      .attr("fill", "none")
+      .attr("stroke", (d) => d.color)
+      .attr("stroke-width", 2)
+      .attr("stroke-dasharray", "5,5")
+      .attr("d", (d) =>
+        benchmarkLine(points.map((point) => ({ month: point.month, value: d.value })))
+      );
+  };
+
+  render();
+  return [
+    ...sourceKeys.map((key) => ({
+      label: sourceLabels[key],
+      color: sourceColors[key],
+      shape: "square" as const,
+      toggle: true,
+      selected: true,
+      onClick: (legend: Legend) => {
+        legend.selected ? visibleSources.add(key) : visibleSources.delete(key);
+        render();
+      }
+    })),
+    {
+      label: `Regular Personal Burn\n${formatCurrency(report.regular_personal_burn)}`,
+      color: COLORS.lossText,
+      shape: "line" as const,
+      toggle: true,
+      selected: true,
+      onClick: (legend: Legend) => {
+        legend.selected
+          ? visibleBenchmarks.add("regular_personal_burn")
+          : visibleBenchmarks.delete("regular_personal_burn");
+        render();
+      }
+    },
+    {
+      label: `Freedom Income Floor\n${formatCurrency(report.freedom_income_floor)}`,
+      color: COLORS.gainText,
+      shape: "line" as const,
+      toggle: true,
+      selected: true,
+      onClick: (legend: Legend) => {
+        legend.selected
+          ? visibleBenchmarks.add("freedom_income_floor")
+          : visibleBenchmarks.delete("freedom_income_floor");
+        render();
+      }
+    }
+  ];
 }

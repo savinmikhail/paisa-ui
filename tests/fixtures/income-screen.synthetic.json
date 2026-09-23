@@ -1,0 +1,98 @@
+{
+  "now": "2024-06-15T00:00:00Z",
+  "income_timeline": [
+    {
+      "date": "2024-01-01T00:00:00Z",
+      "postings": [
+        { "account": "Income:Salary:Studio", "amount": -1200 },
+        { "account": "Income:Interest:Savings", "amount": -40 }
+      ]
+    },
+    {
+      "date": "2024-02-01T00:00:00Z",
+      "postings": [{ "account": "Income:Salary:Studio", "amount": -800 }]
+    },
+    {
+      "date": "2024-03-01T00:00:00Z",
+      "postings": [
+        { "account": "Income:Salary:Studio", "amount": -2400 },
+        { "account": "Income:Coupon:Bond", "amount": -75 }
+      ]
+    },
+    {
+      "date": "2024-04-01T00:00:00Z",
+      "postings": [{ "account": "Income:Salary:Studio", "amount": -1000 }]
+    },
+    {
+      "date": "2024-05-01T00:00:00Z",
+      "postings": [
+        { "account": "Income:Salary:Studio", "amount": -1400 },
+        { "account": "Income:Dividend:Fund", "amount": -100 }
+      ]
+    },
+    {
+      "date": "2024-06-01T00:00:00Z",
+      "postings": [
+        { "account": "Income:Salary:Studio", "amount": -1100 },
+        { "account": "Income:Interest:Savings", "amount": -35 },
+        { "account": "Income:CapitalGains:FX", "amount": -999 }
+      ]
+    }
+  ],
+  "income_analysis": {
+    "passive_income": {
+      "timeline": [
+        {
+          "date": "2024-01-01T00:00:00Z",
+          "interest": 40,
+          "coupons": 0,
+          "dividends": 0,
+          "total": 40
+        },
+        { "date": "2024-02-01T00:00:00Z", "interest": 0, "coupons": 0, "dividends": 0, "total": 0 },
+        {
+          "date": "2024-03-01T00:00:00Z",
+          "interest": 0,
+          "coupons": 75,
+          "dividends": 0,
+          "total": 75
+        },
+        { "date": "2024-04-01T00:00:00Z", "interest": 0, "coupons": 0, "dividends": 0, "total": 0 },
+        {
+          "date": "2024-05-01T00:00:00Z",
+          "interest": 0,
+          "coupons": 0,
+          "dividends": 100,
+          "total": 100
+        },
+        {
+          "date": "2024-06-01T00:00:00Z",
+          "interest": 35,
+          "coupons": 0,
+          "dividends": 0,
+          "total": 35
+        }
+      ],
+      "current_month": {
+        "total": 35,
+        "average": 35,
+        "coverage_regular_personal_burn": 0.035,
+        "coverage_freedom_income_floor": 0.028
+      },
+      "trailing_3_months": {
+        "total": 135,
+        "average": 45,
+        "coverage_regular_personal_burn": 0.045,
+        "coverage_freedom_income_floor": 0.036
+      },
+      "trailing_12_months": {
+        "total": 250,
+        "average": 41.6666666667,
+        "coverage_regular_personal_burn": 0.0416666667,
+        "coverage_freedom_income_floor": 0.0333333333
+      },
+      "regular_personal_burn": 1000,
+      "freedom_income_floor": 1250
+    }
+  }
+}
