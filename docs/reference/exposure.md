@@ -31,7 +31,8 @@ PAISA_UI_DIR=/private/tmp/paisa-ui-ticket-06 \
 VITE_PAISA_EXPOSURE_SOURCE=synthetic npm run dev -- --host 127.0.0.1
 ```
 
-Open `http://127.0.0.1:5173/assets/exposure` at 1440×1100 and capture the full
-page. The stable screenshot input is exported as
+Open `http://127.0.0.1:5173/assets/exposure?fixture=synthetic` at 1440×1100 and
+capture the full page. The query fixture loads the pure public fixture without
+requiring a backend. The stable screenshot input is exported as
 `EXPOSURE_SCREENSHOT_INPUT`; select the default `Northstar Cooperative` row so
 the affected-asset drilldown and the `Unknown` rows are visible.

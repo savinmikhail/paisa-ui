@@ -11,12 +11,14 @@
     type ExposureSummary,
     type FailureDomainField
   } from "$lib/exposure";
+  import { syntheticExposureReport } from "$lib/exposure.fixture";
   import { loadExposureReport, type ExposureSource } from "$lib/exposure_loader";
   import { ajax, formatCurrency, formatPercentage } from "$lib/utils";
   import { onMount } from "svelte";
 
   const configuredSource: ExposureSource =
     import.meta.env.VITE_PAISA_EXPOSURE_SOURCE === "synthetic" ? "synthetic" : "private";
+  let activeSource: ExposureSource = configuredSource;
   let report: ExposureReport = null;
   let summary: ExposureSummary = null;
   let loadError = "";
@@ -41,8 +43,12 @@
   $: topOverlaps = summary?.overlaps.slice(0, 8) || [];
 
   onMount(async () => {
+    const fixtureMode = new URLSearchParams(window.location.search).get("fixture") === "synthetic";
+    activeSource = fixtureMode ? "synthetic" : configuredSource;
     try {
-      report = await loadExposureReport(configuredSource, (route) => ajax(route));
+      report = fixtureMode
+        ? syntheticExposureReport
+        : await loadExposureReport(configuredSource, (route) => ajax(route));
       summary = aggregateExposure(report);
     } catch (error) {
       loadError = error instanceof Error ? error.message : "Exposure API could not be loaded";
@@ -92,7 +98,7 @@
       data-testid="source-notice"
     >
       <span class="icon mr-2"><i class="fas fa-flask" aria-hidden="true" /></span>
-      {#if configuredSource === "synthetic"}
+      {#if activeSource === "synthetic"}
         <span
           ><strong>Synthetic fixture.</strong> No private Ledger metadata is loaded in this capture.</span
         >
