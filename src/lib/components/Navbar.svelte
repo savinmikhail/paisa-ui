@@ -47,6 +47,7 @@
     recurringIcons?: boolean;
     children?: Link[];
     disablePreload?: boolean;
+    absolute?: boolean;
   }
   const links: Link[] = [
     { label: "Dashboard", href: "/", hide: true },
@@ -89,7 +90,13 @@
         { label: "Investment", href: "/investment" },
         { label: "Gain", href: "/gain" },
         { label: "Allocation", href: "/allocation", help: "allocation-targets" },
-        { label: "Analysis", href: "/analysis", tag: "alpha", help: "analysis" }
+        { label: "Analysis", href: "/analysis", tag: "alpha", help: "analysis" },
+        {
+          label: "Decision history",
+          href: "/assets/decision-history",
+          tag: "curated",
+          absolute: true
+        }
       ]
     },
     {
@@ -154,6 +161,14 @@
   let selectedSubLink: Link = null;
   let selectedSubSubLink: Link = null;
 
+  function childHref(parent: Link, child: Link) {
+    return child.absolute ? child.href : parent.href + child.href;
+  }
+
+  function nestedHref(parentPath: string, child: Link) {
+    return child.absolute ? child.href : parentPath + child.href;
+  }
+
   $: normalizedPath = $page.url.pathname?.replace(/(.+)\/$/, "");
 
   $: if (normalizedPath) {
@@ -168,17 +183,18 @@
 
       selectedSubLink = _.find(
         selectedLink.children,
-        (l) => normalizedPath == selectedLink.href + l.href
+        (l) => normalizedPath == childHref(selectedLink, l)
       );
 
       if (!selectedSubLink) {
         selectedSubLink = _.find(selectedLink.children, (l) =>
-          normalizedPath.startsWith(selectedLink.href + l.href)
+          normalizedPath.startsWith(childHref(selectedLink, l))
         );
 
         if (!_.isEmpty(selectedSubLink.children)) {
+          const selectedSubLinkPath = childHref(selectedLink, selectedSubLink);
           selectedSubSubLink = _.find(selectedSubLink.children, (l) =>
-            normalizedPath.startsWith(selectedLink.href + selectedSubLink.href + l.href)
+            normalizedPath.startsWith(nestedHref(selectedSubLinkPath, l))
           );
         }
       }
@@ -240,7 +256,7 @@
             >
             <div class="navbar-dropdown {!isMobile() && 'is-boxed'}">
               {#each link.children as sublink}
-                {@const href = link.href + sublink.href}
+                {@const href = childHref(link, sublink)}
                 {#if _.isEmpty(sublink.children)}
                   <a
                     class="navbar-item"
@@ -266,14 +282,14 @@
                     <div class="dropdown-menu">
                       <div class="dropdown-content">
                         {#each sublink.children as subsublink}
+                          {@const subHref = nestedHref(href, subsublink)}
                           <a
-                            href={href + subsublink.href}
+                            href={subHref}
                             class="navbar-item"
                             data-sveltekit-preload-data={subsublink.disablePreload
                               ? "tap"
                               : "hover"}
-                            class:is-active={normalizedPath == href + subsublink.href}
-                            >{subsublink.label}</a
+                            class:is-active={normalizedPath == subHref}>{subsublink.label}</a
                           >
                         {/each}
                       </div>
@@ -359,7 +375,7 @@
             <li>
               <a class="is-inactive">{selectedSubSubLink.label}</a>
             </li>
-          {:else if selectedLink.href + selectedSubLink.href != normalizedPath}
+          {:else if childHref(selectedLink, selectedSubLink) != normalizedPath}
             <li>
               <a class="is-inactive">{decodeURIComponent(_.last(normalizedPath.split("/")))}</a>
             </li>

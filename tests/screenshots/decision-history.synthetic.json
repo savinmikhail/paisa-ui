@@ -1,0 +1,18 @@
+{
+  "name": "Decision history synthetic fixture",
+  "url": "/assets/decision-history?fixture=synthetic",
+  "viewports": [
+    { "name": "desktop", "width": 1440, "height": 1400 },
+    { "name": "mobile", "width": 390, "height": 1200 }
+  ],
+  "readySelector": "[data-testid=decision-history-ready]",
+  "caseSelector": "[data-testid^=decision-case-]",
+  "expectedCaseCount": 4,
+  "prohibitedText": [
+    "Status: Success",
+    "Status: Failure",
+    "Automatic success",
+    "Automatic failure"
+  ],
+  "notes": "Use a dev server with the public-safe synthetic fixture. Do not point this capture at the private Ledger backend."
+}

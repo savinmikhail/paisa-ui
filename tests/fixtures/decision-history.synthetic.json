@@ -1,0 +1,17 @@
+{
+  "name": "decision-history / synthetic fixture",
+  "schemaVersion": "decision-history/v1",
+  "source": "public-safe deterministic fixture",
+  "caseIds": [
+    "aldar-broker-account",
+    "iis-contribution",
+    "large-ofz-purchase",
+    "summer-rub-to-usd-shift"
+  ],
+  "assertions": [
+    "all four cases are visible",
+    "each case shows period, decision, context, amount, outcome, current status, source refs, and caveats",
+    "each case shows separate FX, fees, taxes, and RUB counterfactual fields",
+    "no case receives a success or failure status"
+  ]
+}
