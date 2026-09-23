@@ -291,7 +291,7 @@
   .eyebrow,
   .field-label,
   .case-period {
-    color: $grey;
+    color: color-mix(in srgb, currentColor 68%, transparent);
     font-size: 0.68rem;
     font-weight: 700;
     letter-spacing: 0.08em;
@@ -299,7 +299,7 @@
   }
 
   .index-count {
-    color: $grey-light;
+    color: color-mix(in srgb, currentColor 52%, transparent);
     font-size: 0.7rem;
   }
 
@@ -312,7 +312,7 @@
   .history-index a {
     align-items: flex-start;
     border-radius: $radius;
-    color: $grey-dark;
+    color: inherit;
     display: flex;
     gap: 0.75rem;
     margin: 0.25rem 0;
@@ -336,7 +336,7 @@
   }
 
   .index-number {
-    color: $grey-light;
+    color: color-mix(in srgb, currentColor 52%, transparent);
     font-family: $family-monospace;
     font-size: 0.72rem;
     padding-top: 0.1rem;
@@ -354,13 +354,13 @@
   }
 
   .index-copy small {
-    color: $grey;
+    color: color-mix(in srgb, currentColor 68%, transparent);
     font-size: 0.7rem;
   }
 
   .index-footnote {
-    border-top: 1px solid $grey-lighter;
-    color: $grey;
+    border-top: 1px solid color-mix(in srgb, currentColor 18%, transparent);
+    color: color-mix(in srgb, currentColor 68%, transparent);
     font-size: 0.72rem;
     line-height: 1.55;
     margin: 0;
@@ -380,7 +380,7 @@
   }
 
   .decision-case.active-case {
-    border-color: rgba($link, 0.5);
+    border-color: color-mix(in srgb, #{$link} 58%, transparent);
     box-shadow: 0 0.5rem 1.5rem color-mix(in srgb, currentColor 10%, transparent);
   }
 
@@ -402,7 +402,7 @@
   }
 
   .case-title h2 {
-    color: $black-bis;
+    color: inherit;
     font-size: 1.15rem;
     font-weight: 650;
     line-height: 1.25;
@@ -413,7 +413,7 @@
     background: color-mix(in srgb, currentColor 7%, transparent);
     border: 1px solid color-mix(in srgb, currentColor 18%, transparent);
     border-radius: 999px;
-    color: $grey-dark;
+    color: color-mix(in srgb, currentColor 78%, transparent);
     font-size: 0.7rem;
     line-height: 1.2;
     padding: 0.4rem 0.65rem;
@@ -438,14 +438,14 @@
   }
 
   .narrative-block p {
-    color: $grey-dark;
+    color: color-mix(in srgb, currentColor 78%, transparent);
     font-size: 0.88rem;
     line-height: 1.55;
     margin: 0.35rem 0 0;
   }
 
   .narrative-block .decision-copy {
-    color: $black-bis;
+    color: inherit;
     font-size: 1rem;
     font-weight: 600;
     line-height: 1.45;
@@ -465,7 +465,7 @@
   }
 
   .amount-panel strong {
-    color: $black-bis;
+    color: inherit;
     font-family: $family-monospace;
     font-size: 1.35rem;
     font-weight: 650;
@@ -473,7 +473,7 @@
   }
 
   .amount-panel > span:last-child {
-    color: $grey;
+    color: color-mix(in srgb, currentColor 68%, transparent);
     font-size: 0.75rem;
   }
 
@@ -484,13 +484,13 @@
   }
 
   .evidence-field {
-    border-top: 2px solid rgba($link, 0.5);
+    border-top: 2px solid color-mix(in srgb, #{$link} 58%, transparent);
     min-width: 0;
     padding-top: 0.45rem;
   }
 
   .evidence-field.field-unknown {
-    border-top-color: $grey-lighter;
+    border-top-color: color-mix(in srgb, currentColor 18%, transparent);
   }
 
   .evidence-field-heading {
@@ -501,12 +501,12 @@
   }
 
   .field-status {
-    color: $grey;
+    color: color-mix(in srgb, currentColor 68%, transparent);
     font-size: 0.65rem;
   }
 
   .evidence-field p {
-    color: $black-bis;
+    color: inherit;
     font-size: 0.78rem;
     font-weight: 600;
     line-height: 1.35;
@@ -514,15 +514,15 @@
   }
 
   .evidence-field small {
-    color: $grey;
+    color: color-mix(in srgb, currentColor 68%, transparent);
     display: block;
     font-size: 0.68rem;
     line-height: 1.45;
   }
 
   .case-footer {
-    background: $white-bis;
-    border-top: 1px solid $grey-lightest;
+    background: color-mix(in srgb, currentColor 5%, transparent);
+    border-top: 1px solid color-mix(in srgb, currentColor 14%, transparent);
     display: grid;
     gap: 1.25rem;
     grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
@@ -531,7 +531,7 @@
 
   .source-list,
   .caveat-list {
-    color: $grey-dark;
+    color: color-mix(in srgb, currentColor 78%, transparent);
     font-size: 0.72rem;
     line-height: 1.45;
     list-style: none;
@@ -556,7 +556,7 @@
   }
 
   .caveat-list li::before {
-    color: $grey;
+    color: color-mix(in srgb, currentColor 68%, transparent);
     content: "•";
     left: 0.15rem;
     position: absolute;
@@ -575,14 +575,14 @@
 
   .decision-history-loading {
     align-items: center;
-    color: $grey-dark;
+    color: color-mix(in srgb, currentColor 78%, transparent);
     display: flex;
     gap: 0.75rem;
     justify-content: center;
   }
 
   .loader {
-    border: 2px solid $grey-lighter;
+    border: 2px solid color-mix(in srgb, currentColor 18%, transparent);
     border-radius: 50%;
     border-top-color: $link;
     display: inline-block;
@@ -591,7 +591,7 @@
   }
 
   .decision-history-empty p:not(.title) {
-    color: $grey-dark;
+    color: color-mix(in srgb, currentColor 78%, transparent);
     line-height: 1.55;
     margin: 0.7rem auto;
     max-width: 34rem;
