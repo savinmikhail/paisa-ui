@@ -254,6 +254,50 @@
                   </table>
                 </div>
               {/if}
+              {#if r.fundingRoutes?.length}
+                <h3>Стоимость маршрутов покупки USD</h3>
+                <p class="detail-note">
+                  Фактический курс = списанные рубли / зачисленные доллары. Разница к курсу ЦБ
+                  включает спред и затраты всего маршрута; это оценка, а не отдельная комиссия.
+                  Периоды и суммы различаются, поэтому строки не задают рейтинг банков.
+                </p>
+                <div class="table-wrap">
+                  <table class="flow-table">
+                    <caption>Только подтверждённые связки RUB → USD</caption>
+                    <thead>
+                      <tr>
+                        <th scope="col">Маршрут</th>
+                        <th scope="col">Период / зачислений</th>
+                        <th scope="col">Списано / получено</th>
+                        <th scope="col">Курс RUB/USD</th>
+                        <th scope="col">Разница к ЦБ</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {#each r.fundingRoutes as route}
+                        <tr>
+                          <th scope="row">{route.route}</th>
+                          <td
+                            >{when(route.firstDate)} — {when(route.lastDate)}<small
+                              >{route.receipts} зачислений</small
+                            ></td
+                          >
+                          <td>{rub(route.rubSent)}<small>{number(route.usdReceived)} USD</small></td
+                          >
+                          <td
+                            >{number(route.effectiveRate)}<small
+                              >ЦБ: {number(route.referenceRate)}</small
+                            ></td
+                          >
+                          <td class={tone(-route.gapRub)}
+                            >{rub(route.gapRub)}<small>{number(route.gapPercent)}%</small></td
+                          >
+                        </tr>
+                      {/each}
+                    </tbody>
+                  </table>
+                </div>
+              {/if}
               <details class="calculation-details">
                 <summary>Операции и расчёт ({r.details.length})</summary>
                 <p class="method">{r.method}</p>

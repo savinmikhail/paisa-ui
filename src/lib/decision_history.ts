@@ -78,6 +78,18 @@ export interface DecisionHistoryResult {
   conversionCost?: number;
   bondCoupons?: number;
   bondPriceAndRedemption?: number;
+  fundingRoutes?: {
+    route: string;
+    receipts: number;
+    firstDate: string;
+    lastDate: string;
+    rubSent: number;
+    usdReceived: number;
+    effectiveRate: number;
+    referenceRate: number;
+    gapRub: number;
+    gapPercent: number;
+  }[];
   segments?: { label: string; invested: number; netResult: number; difference: number }[];
   details: {
     date: string;
@@ -315,6 +327,20 @@ syntheticDecisionHistory.cases.forEach((item, index) => {
   if (item.id === "summer-rub-to-usd-shift") {
     item.result.conversionCost = 7000;
     item.result.fxEffect = netResult + item.result.conversionCost + item.result.fees;
+    item.result.fundingRoutes = [
+      {
+        route: "Банк А → Банк Б",
+        receipts: 2,
+        firstDate: "2025-06-01",
+        lastDate: "2025-06-15",
+        rubSent: 100000,
+        usdReceived: 1200,
+        effectiveRate: 83.33,
+        referenceRate: 80,
+        gapRub: 4000,
+        gapPercent: 4.17
+      }
+    ];
   }
 });
 
