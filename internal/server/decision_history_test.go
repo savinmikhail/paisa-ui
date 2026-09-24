@@ -15,7 +15,7 @@ import (
 
 func TestDecisionHistoryEndpointReturnsConfiguredPayload(t *testing.T) {
 	decisionHistoryFile := filepath.Join(t.TempDir(), "decision-history.json")
-	content := []byte(`{"schemaVersion":"decision-history/v1","source":"private-adapter","cases":[{"id":"private-test-case","title":"Private test case"}]}`)
+	content := []byte(`{"schemaVersion":"decision-history/v1","source":"private-adapter","overview":{"title":"Private overview"},"themes":[{"id":"private-theme"}],"cases":[{"id":"private-test-case","title":"Private test case"}]}`)
 	require.NoError(t, os.WriteFile(decisionHistoryFile, content, 0600))
 	t.Setenv("PAISA_DECISION_HISTORY_FILE", decisionHistoryFile)
 
@@ -29,6 +29,9 @@ func TestDecisionHistoryEndpointReturnsConfiguredPayload(t *testing.T) {
 	require.NoError(t, json.Unmarshal(record.Body.Bytes(), &payload))
 	assert.Equal(t, "decision-history/v1", payload.SchemaVersion)
 	assert.Equal(t, "private-adapter", payload.Source)
+	assert.JSONEq(t, `{"title":"Private overview"}`, string(payload.Overview))
+	require.Len(t, payload.Themes, 1)
+	assert.JSONEq(t, `{"id":"private-theme"}`, string(payload.Themes[0]))
 	require.Len(t, payload.Cases, 1)
 	assert.JSONEq(t, `{"id":"private-test-case","title":"Private test case"}`, string(payload.Cases[0]))
 }

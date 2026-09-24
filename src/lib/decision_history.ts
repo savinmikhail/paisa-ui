@@ -6,6 +6,57 @@ export interface DecisionHistoryField {
   detail: string;
 }
 
+export type DecisionHistoryMetricTone = "accent" | "positive" | "negative" | "neutral";
+
+export interface DecisionHistoryMetric {
+  label: string;
+  value: string;
+  detail?: string;
+  tone?: DecisionHistoryMetricTone;
+}
+
+export interface DecisionHistoryTimelineItem {
+  label: string;
+  value: string;
+  detail: string;
+}
+
+export interface DecisionHistoryBranch {
+  id: string;
+  number: string;
+  title: string;
+  period: string;
+  decision: string;
+  headline: string;
+  metrics: DecisionHistoryMetric[];
+  timeline?: DecisionHistoryTimelineItem[];
+  outcome: string;
+  sourceRefs: string[];
+  caveats: string[];
+}
+
+export interface DecisionHistoryTheme {
+  id: string;
+  title: string;
+  period: string;
+  decision: string;
+  headline: string;
+  summary: string;
+  metrics: DecisionHistoryMetric[];
+  branches: DecisionHistoryBranch[];
+  sourceRefs: string[];
+  caveats: string[];
+}
+
+export interface DecisionHistoryOverview {
+  title: string;
+  subtitle: string;
+  headline: string;
+  valuationDate: string;
+  metrics: DecisionHistoryMetric[];
+  note: string;
+}
+
 export interface DecisionHistoryCase {
   id: string;
   title: string;
@@ -30,6 +81,8 @@ export interface DecisionHistoryCase {
 
 export interface PrivateDecisionHistoryPayload {
   schemaVersion: "decision-history/v1";
+  overview?: DecisionHistoryOverview;
+  themes?: DecisionHistoryTheme[];
   cases: DecisionHistoryCase[];
 }
 

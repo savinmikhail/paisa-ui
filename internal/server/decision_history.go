@@ -15,6 +15,8 @@ import (
 type DecisionHistoryPayload struct {
 	SchemaVersion string            `json:"schemaVersion"`
 	Source        string            `json:"source"`
+	Overview      json.RawMessage   `json:"overview,omitempty"`
+	Themes        []json.RawMessage `json:"themes,omitempty"`
 	Cases         []json.RawMessage `json:"cases"`
 }
 
