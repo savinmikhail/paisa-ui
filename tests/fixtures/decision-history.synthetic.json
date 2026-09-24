@@ -15,6 +15,7 @@
     "comparison explicitly discloses payout carry and hypothetical savings tax treatment",
     "operations and sources expand on demand",
     "the 390px summary exposes both nominal result and benchmark difference without horizontal page overflow",
-    "win or shortfall describes only the stated monetary alternative"
+    "win or shortfall describes only the stated monetary alternative",
+    "bond coupons and interim price effect are separate; currency uses an independent reference rate"
   ]
 }

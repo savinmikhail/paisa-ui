@@ -76,6 +76,8 @@ export interface DecisionHistoryResult {
   method: string;
   fxEffect?: number;
   conversionCost?: number;
+  bondCoupons?: number;
+  bondPriceAndRedemption?: number;
   segments?: { label: string; invested: number; netResult: number; difference: number }[];
   details: {
     date: string;
@@ -287,12 +289,13 @@ export const syntheticDecisionHistory: PrivateDecisionHistoryPayload = {
 
 syntheticDecisionHistory.cases.forEach((item, index) => {
   const difference = [2400, -1800, -3200, 4100][index];
+  const netResult = 8000 + difference;
   item.result = {
     asOf: "2025-12-31",
     invested: 100000,
     withdrawn: 5000,
     currentValue: 103000 + difference,
-    netResult: 8000 + difference,
+    netResult,
     fees: 200,
     taxes: 300,
     taxRefund: 0,
@@ -305,6 +308,14 @@ syntheticDecisionHistory.cases.forEach((item, index) => {
     method: "Синтетические суммы. Одинаковые даты вложений и ставка сравнения.",
     details: [{ date: "2025-01-01", label: "Взнос", amount: 100000, source: "SYN-001" }]
   };
+  if (item.id === "large-ofz-purchase") {
+    item.result.bondCoupons = 9000;
+    item.result.bondPriceAndRedemption = netResult - 9000;
+  }
+  if (item.id === "summer-rub-to-usd-shift") {
+    item.result.conversionCost = 7000;
+    item.result.fxEffect = netResult + item.result.conversionCost + item.result.fees;
+  }
 });
 
 export const privateDecisionHistoryAdapter = {

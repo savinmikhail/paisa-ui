@@ -111,8 +111,8 @@
               {@const r = item.result}
               <div class="verdict">
                 <h3 class={tone(r.difference)}>
-                  {r.difference >= 0 ? "Выигрыш" : "Отставание"}
-                  {rub(Math.abs(r.difference))} относительно счёта под {r.benchmarkRate}%
+                  Разница на дату оценки: {signed(r.difference)} относительно счёта под
+                  {r.benchmarkRate}%
                 </h3>
                 <p>
                   Само решение принесло <strong class={tone(r.netResult)}
@@ -151,21 +151,40 @@
                     Комиссии: {rub(r.fees)}. Удержанный налог: {rub(r.taxes)}.{#if r.taxRefund}
                       Налоговый возврат: {rub(r.taxRefund)}.{/if} Эти суммы уже учтены в итоге.
                   </p>
-                  {#if r.fxEffect !== undefined && r.conversionCost !== undefined}
+                  {#if r.bondCoupons !== undefined && r.bondPriceAndRedemption !== undefined}
                     <dl class="reconciliation attribution">
                       <div>
-                        <dt>Изменение курса за время владения</dt>
-                        <dd class={tone(r.fxEffect)}>{signed(r.fxEffect)}</dd>
+                        <dt>Полученные купоны</dt>
+                        <dd class={tone(r.bondCoupons)}>{signed(r.bondCoupons)}</dd>
                       </div>
                       <div>
-                        <dt>Издержки конвертации в фактическом курсе</dt>
-                        <dd>{rub(r.conversionCost)}</dd>
+                        <dt>Стоимость остатка и погашения минус затраты</dt>
+                        <dd class={tone(r.bondPriceAndRedemption)}>
+                          {signed(r.bondPriceAndRedemption)}
+                        </dd>
                       </div>
                     </dl>
                     <p class="detail-note">
-                      Издержки — разница между фактической RUB-стоимостью и стоимостью валюты по
-                      учётному курсу в дату получения. Они уже входят во вложения, повторно не
-                      вычитаются.
+                      Это результат на дату оценки. Доходность к погашению предполагает будущие
+                      выплаты и удержание бумаги до соответствующей даты; текущая цена может
+                      временно уменьшить результат.
+                    </p>
+                  {/if}
+                  {#if r.fxEffect !== undefined && r.conversionCost !== undefined}
+                    <dl class="reconciliation attribution">
+                      <div>
+                        <dt>Изменение курса относительно опорного на дату покупки</dt>
+                        <dd class={tone(r.fxEffect)}>{signed(r.fxEffect)}</dd>
+                      </div>
+                      <div>
+                        <dt>Разница фактического курса покупки с опорным</dt>
+                        <dd class={tone(-r.conversionCost)}>{signed(-r.conversionCost)}</dd>
+                      </div>
+                    </dl>
+                    <p class="detail-note">
+                      Для USD опорный курс — официальный курс ЦБ на дату покупки; для USDT —
+                      датированная учётная котировка. Разница включает спред и другие затраты
+                      маршрута, уже входит в итог и повторно не вычитается.
                     </p>
                   {/if}
                 </div>
