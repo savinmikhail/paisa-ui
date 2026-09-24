@@ -697,8 +697,14 @@ export function ajax(route: "/api/networth"): Promise<{
   networthTimeline: Networth[];
   xirr: number;
 }>;
-export function ajax(route: "/api/networth/reconciliation"): Promise<NetworthReconciliation>;
-export function ajax(route: `/api/networth/reconciliation${string}`): Promise<NetworthReconciliation>;
+export function ajax(
+  route: "/api/networth/reconciliation",
+  options?: RequestOptions
+): Promise<NetworthReconciliation>;
+export function ajax(
+  route: `/api/networth/reconciliation${string}`,
+  options?: RequestOptions
+): Promise<NetworthReconciliation>;
 export function ajax(route: "/api/money_flow"): Promise<MoneyFlowSource>;
 export function ajax(route: `/api/money_flow${string}`): Promise<MoneyFlowSource>;
 export function ajax(route: "/api/gain"): Promise<{

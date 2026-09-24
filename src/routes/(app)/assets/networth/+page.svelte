@@ -63,30 +63,32 @@
     void loadReconciliation(rangeFrom, rangeTo);
   }
 
-  $: if (!_.isEmpty(visiblePoints)) {
+  function replaceNetworthChart(pointsToRender: Networth[], chartElement: Element) {
     if (destroy) {
       destroy();
     }
 
-    ({ destroy, legends } = renderNetworth(
-      visiblePoints,
-      svg,
-      {
-        onHover: (point, series) => {
-          focusedPoint = reduceNetworthInteraction(
-            { focus: focusedPoint },
-            { type: "focus", focus: { point, series } }
-          ).focus;
-        },
-        onLeave: () => {
-          focusedPoint = reduceNetworthInteraction({ focus: focusedPoint }, { type: "blur" }).focus;
-        },
-        onRangeSelect: selectNetworthRange
-      }
-    ));
+    return renderNetworth(pointsToRender, chartElement, {
+      onHover: (point, series) => {
+        focusedPoint = reduceNetworthInteraction(
+          { focus: focusedPoint },
+          { type: "focus", focus: { point, series } }
+        ).focus;
+      },
+      onLeave: () => {
+        focusedPoint = reduceNetworthInteraction({ focus: focusedPoint }, { type: "blur" }).focus;
+      },
+      onRangeSelect: selectNetworthRange
+    });
   }
 
-  onDestroy(async () => {
+  $: if (!_.isEmpty(visiblePoints) && svg) {
+    const rendered = replaceNetworthChart(visiblePoints, svg);
+    destroy = rendered.destroy;
+    legends = rendered.legends;
+  }
+
+  onDestroy(() => {
     if (destroy) {
       destroy();
     }
@@ -122,7 +124,8 @@
     }
 
     const next = await ajax(
-      `/api/networth/reconciliation?from=${dateInputValue(from)}&to=${dateInputValue(to)}`
+      `/api/networth/reconciliation?from=${dateInputValue(from)}&to=${dateInputValue(to)}`,
+      { background: true }
     );
     if (request === reconciliationRequest) {
       reconciliation = next;

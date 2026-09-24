@@ -192,7 +192,11 @@ export function renderNetworth(
         .y((d) => y(networth(d)))
     );
 
-  const hoverCircle = layer.append("circle").attr("r", "3").attr("fill", "none");
+  const hoverCircle = layer
+    .append("circle")
+    .attr("r", "3")
+    .attr("fill", "none")
+    .style("pointer-events", "none");
   const selectionOverlay = g
     .append("rect")
     .attr("class", "networth-selection")
@@ -247,7 +251,15 @@ export function renderNetworth(
   chartNode.addEventListener("pointermove", onPointerMove);
   chartNode.addEventListener("pointerup", finishDrag);
   chartNode.addEventListener("pointercancel", finishDrag);
-  const t = tippy(hoverCircle.node(), { theme: "light", delay: 0, allowHTML: true });
+  let pointerX = 0;
+  let pointerY = 0;
+  const pointerRect = () => new DOMRect(pointerX, pointerY, 0, 0);
+  const t = tippy(hoverCircle.node(), {
+    theme: "light",
+    delay: 0,
+    allowHTML: true,
+    getReferenceClientRect: pointerRect
+  });
 
   const networthVoronoiPoints: Delaunay.Point[] = _.map(points, (d) => [x(d.date), y(networth(d))]);
   const investmentVoronoiPoints: Delaunay.Point[] = _.map(points, (d) => [
@@ -279,7 +291,14 @@ export function renderNetworth(
     .attr("d", (_, i) => {
       return voronoi.renderCell(i);
     })
-    .on("mouseover", (_, [pointType, d]) => {
+    .on("mousemove", (event: MouseEvent) => {
+      pointerX = event.clientX;
+      pointerY = event.clientY;
+      t.popperInstance?.forceUpdate();
+    })
+    .on("mouseover", (event: MouseEvent, [pointType, d]) => {
+      pointerX = event.clientX;
+      pointerY = event.clientY;
       hoverCircle
         .attr("cx", x(d.date))
         .attr("cy", y(pointType == "networth" ? networth(d) : investment(d)))
