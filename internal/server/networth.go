@@ -2,6 +2,7 @@ package server
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 	"time"
 
@@ -31,6 +32,19 @@ type NetworthReconciliation struct {
 	Opening       Networth                        `json:"opening"`
 	Closing       Networth                        `json:"closing"`
 	Decomposition reporting.NetWorthDecomposition `json:"decomposition"`
+	Operations    []NetworthOperation             `json:"operations"`
+}
+
+type NetworthOperation struct {
+	Date                 time.Time       `json:"date"`
+	Payee                string          `json:"payee"`
+	Category             string          `json:"category"`
+	Amount               decimal.Decimal `json:"amount"`
+	TransactionID        string          `json:"transactionId"`
+	Accounts             []string        `json:"accounts"`
+	FileName             string          `json:"fileName,omitempty"`
+	TransactionBeginLine uint64          `json:"transactionBeginLine,omitempty"`
+	TransactionEndLine   uint64          `json:"transactionEndLine,omitempty"`
 }
 
 func GetNetworth(db *gorm.DB) gin.H {
@@ -51,9 +65,9 @@ func GetCurrentNetworth(db *gorm.DB) gin.H {
 }
 
 func GetNetworthReconciliation(db *gorm.DB, from, to time.Time) NetworthReconciliation {
-	postings := query.Init(db).Like("Assets:%", "Income:CapitalGains:%", "Liabilities:%").UntilToday().All()
-	postings = service.PopulateMarketPrice(db, postings)
-	timeline := computeNetworthTimeline(db, postings, false)
+	timelinePostings := query.Init(db).Like("Assets:%", "Income:CapitalGains:%", "Liabilities:%").UntilToday().All()
+	timelinePostings = service.PopulateMarketPrice(db, timelinePostings)
+	timeline := computeNetworthTimeline(db, timelinePostings, false)
 	if len(timeline) == 0 {
 		return NetworthReconciliation{}
 	}
@@ -70,7 +84,8 @@ func GetNetworthReconciliation(db *gorm.DB, from, to time.Time) NetworthReconcil
 
 	opening := timelineAtOrBefore(timeline, from)
 	closing := timelineAtOrBefore(timeline, to)
-	flows := networthFlows(postings, from, to)
+	flowPostings := query.Init(db).UntilToday().All()
+	flows := networthFlows(flowPostings, from, to)
 
 	return NetworthReconciliation{
 		From:          opening.Date,
@@ -78,6 +93,7 @@ func GetNetworthReconciliation(db *gorm.DB, from, to time.Time) NetworthReconcil
 		Opening:       opening,
 		Closing:       closing,
 		Decomposition: reporting.ReconcileNetWorth(networthValue(opening), networthValue(closing), flows),
+		Operations:    networthOperations(flowPostings, from, to),
 	}
 }
 
@@ -144,6 +160,103 @@ func networthFlows(postings []posting.Posting, from, to time.Time) reporting.Net
 		}
 	}
 	return flows
+}
+
+func networthOperations(postings []posting.Posting, from, to time.Time) []NetworthOperation {
+	byTransaction := make(map[string][]posting.Posting)
+	for _, p := range postings {
+		if p.Date.Before(from) || !p.Date.Before(to.AddDate(0, 0, 1)) {
+			continue
+		}
+		key := p.TransactionID
+		if key == "" {
+			key = fmt.Sprintf("%s/%s/%s/%d", p.Date.Format(time.RFC3339), p.Account, p.Commodity, p.ID)
+		}
+		byTransaction[key] = append(byTransaction[key], p)
+	}
+
+	categoryOrder := []string{"netSavings", "passiveIncome", "market", "debt", "internalTransfer", "unattributed"}
+	operations := make([]NetworthOperation, 0, len(byTransaction))
+	for transactionID, transactionPostings := range byTransaction {
+		contributions := make(map[string]decimal.Decimal)
+		hasFlowAccount := false
+		hasLiability := false
+		hasInternalTransfer := false
+		unattributed := decimal.Zero
+		accounts := make([]string, 0, len(transactionPostings))
+		seenAccounts := make(map[string]struct{})
+
+		for _, p := range transactionPostings {
+			if _, seen := seenAccounts[p.Account]; !seen {
+				accounts = append(accounts, p.Account)
+				seenAccounts[p.Account] = struct{}{}
+			}
+			if reporting.IsInternalTransfer(p) {
+				hasInternalTransfer = true
+			}
+			switch {
+			case reporting.IsPassiveIncome(p):
+				contributions["passiveIncome"] = contributions["passiveIncome"].Add(p.Amount.Neg())
+				hasFlowAccount = true
+			case reporting.IsCapitalGain(p):
+				contributions["market"] = contributions["market"].Add(p.Amount.Neg())
+				hasFlowAccount = true
+			case strings.HasPrefix(p.Account, "Income:"), strings.HasPrefix(p.Account, "Expenses:"):
+				contributions["netSavings"] = contributions["netSavings"].Add(p.Amount.Neg())
+				hasFlowAccount = true
+			case strings.HasPrefix(p.Account, "Liabilities:"):
+				hasLiability = true
+			}
+
+			if strings.HasPrefix(p.Account, "Assets:") || strings.HasPrefix(p.Account, "Liabilities:") {
+				unattributed = unattributed.Add(p.Amount)
+			}
+		}
+
+		if !hasFlowAccount {
+			if hasLiability {
+				contributions["debt"] = unattributed
+			} else if hasInternalTransfer && !unattributed.IsZero() {
+				contributions["internalTransfer"] = unattributed
+			} else if !unattributed.IsZero() {
+				contributions["unattributed"] = unattributed
+			}
+		}
+
+		if len(accounts) == 0 {
+			continue
+		}
+		sort.Strings(accounts)
+		for _, category := range categoryOrder {
+			amount, ok := contributions[category]
+			if !ok || amount.IsZero() {
+				continue
+			}
+			sample := transactionPostings[0]
+			operations = append(operations, NetworthOperation{
+				Date:                 sample.Date,
+				Payee:                sample.Payee,
+				Category:             category,
+				Amount:               amount,
+				TransactionID:        transactionID,
+				Accounts:             accounts,
+				FileName:             sample.FileName,
+				TransactionBeginLine: sample.TransactionBeginLine,
+				TransactionEndLine:   sample.TransactionEndLine,
+			})
+		}
+	}
+
+	sort.SliceStable(operations, func(i, j int) bool {
+		if operations[i].Date.Equal(operations[j].Date) {
+			if operations[i].Amount.Abs().Equal(operations[j].Amount.Abs()) {
+				return operations[i].TransactionID < operations[j].TransactionID
+			}
+			return operations[i].Amount.Abs().GreaterThan(operations[j].Amount.Abs())
+		}
+		return operations[i].Date.Before(operations[j].Date)
+	})
+	return operations
 }
 
 func computeNetworth(db *gorm.DB, postings []posting.Posting) Networth {

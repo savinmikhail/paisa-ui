@@ -77,6 +77,7 @@ export function ticket04FixtureReconciliation(
     to: closing.date,
     opening,
     closing,
+    operations: [],
     decomposition: {
       ...decomposition,
       totalDelta: closing.investmentAmount - opening.investmentAmount

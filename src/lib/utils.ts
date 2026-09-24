@@ -211,12 +211,31 @@ export interface NetworthDecomposition {
   totalDelta: number;
 }
 
+export interface NetworthOperation {
+  date: dayjs.Dayjs;
+  payee: string;
+  category:
+    | "netSavings"
+    | "passiveIncome"
+    | "market"
+    | "debt"
+    | "internalTransfer"
+    | "unattributed";
+  amount: number;
+  transactionId: string;
+  accounts: string[];
+  fileName?: string;
+  transactionBeginLine?: number;
+  transactionEndLine?: number;
+}
+
 export interface NetworthReconciliation {
   from: dayjs.Dayjs;
   to: dayjs.Dayjs;
   opening: Networth;
   closing: Networth;
   decomposition: NetworthDecomposition;
+  operations: NetworthOperation[];
 }
 
 export interface Gain {

@@ -1,5 +1,5 @@
 import type dayjs from "dayjs";
-import type { Networth } from "./utils";
+import type { Networth, NetworthOperation } from "./utils";
 
 export const NETWORTH_DECOMPOSITION_KEYS = [
   "netSavings",
@@ -22,6 +22,7 @@ export interface NetworthReconciliation {
   opening: Networth;
   closing: Networth;
   decomposition: NetworthDecomposition;
+  operations: NetworthOperation[];
 }
 
 export interface NetworthIntervalSummary {
