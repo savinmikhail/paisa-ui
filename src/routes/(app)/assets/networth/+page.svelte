@@ -162,8 +162,21 @@
     ["Market", "market"],
     ["FX", "fx"],
     ["Debt", "debt"],
-    ["Corrections", "corrections"]
+    ["Unattributed change", "corrections"]
   ] as const;
+
+  const operationLabels: Record<string, string> = {
+    netSavings: "Net savings",
+    passiveIncome: "Interest / coupons / dividends",
+    market: "Market",
+    debt: "Debt / liability balance",
+    internalTransfer: "Internal transfer (not savings)",
+    unattributed: "Unattributed change"
+  };
+
+  function operationLabel(category: string): string {
+    return operationLabels[category] || category;
+  }
 </script>
 
 <section class="section tab-networth">
@@ -285,6 +298,50 @@
                 </tr>
               </tbody>
             </table>
+            <div class="networth-operations-heading">
+              <h3 class="title is-7 mb-1">Operations behind this interval</h3>
+              <p class="is-size-7 has-text-grey">
+                Source transactions found in the selected dates, including changes that remain unattributed.
+              </p>
+            </div>
+            {#if reconciliation.operations.length === 0}
+              <p class="is-size-7 has-text-grey">No source-level operations were found for this interval.</p>
+            {:else}
+              <div class="networth-operations" data-testid="networth-operations">
+                <table class="table is-fullwidth is-narrow is-size-7">
+                  <thead>
+                    <tr>
+                      <th>Date</th>
+                      <th>Operation</th>
+                      <th>Category</th>
+                      <th class="has-text-right">Impact</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {#each reconciliation.operations as operation}
+                      <tr>
+                        <td class="is-nowrap">{operation.date.format("DD MMM YYYY")}</td>
+                        <td>
+                          <div>{operation.payee || operation.transactionId}</div>
+                          <div class="is-size-7 has-text-grey" title={operation.accounts.join(" · ")}>
+                            {operation.accounts.join(" · ")}
+                          </div>
+                          {#if operation.fileName}
+                            <div class="is-size-7 has-text-grey">
+                              {operation.fileName}:{operation.transactionBeginLine}
+                            </div>
+                          {/if}
+                        </td>
+                        <td>{operationLabel(operation.category)}</td>
+                        <td class:has-text-danger={operation.amount < 0} class:has-text-success={operation.amount > 0} class="has-text-right is-nowrap">
+                          {formatCurrency(operation.amount)}
+                        </td>
+                      </tr>
+                    {/each}
+                  </tbody>
+                </table>
+              </div>
+            {/if}
           {:else}
             <p class="is-size-7 has-text-grey">Loading reconciliation…</p>
           {/if}
@@ -354,6 +411,33 @@
 
   .networth-detail table {
     margin-bottom: 0;
+  }
+
+  .networth-operations-heading {
+    border-top: 1px solid var(--bulma-border);
+    margin-top: 1rem;
+    padding-top: 1rem;
+  }
+
+  .networth-operations {
+    margin-top: 0.75rem;
+    max-height: 28rem;
+    overflow: auto;
+  }
+
+  .networth-operations table {
+    min-width: 42rem;
+  }
+
+  .networth-operations thead th {
+    position: sticky;
+    top: 0;
+    background: var(--bulma-scheme-main);
+    z-index: 1;
+  }
+
+  .is-nowrap {
+    white-space: nowrap;
   }
 
   :global(.networth-selection) {
