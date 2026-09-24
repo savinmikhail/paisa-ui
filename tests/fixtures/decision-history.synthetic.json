@@ -9,9 +9,12 @@
     "summer-rub-to-usd-shift"
   ],
   "assertions": [
-    "all four cases are visible",
-    "each case shows period, decision, context, amount, outcome, current status, source refs, and caveats",
-    "each case shows separate FX, fees, taxes, and RUB counterfactual fields",
-    "no case receives a success or failure status"
+    "all four synthetic cases appear in the comparison summary and detail sections",
+    "positive nominal profit can coexist with a negative difference against savings",
+    "contributions, payouts, market value, fees, withheld taxes and benchmark are separately labelled",
+    "comparison explicitly discloses payout carry and hypothetical savings tax treatment",
+    "operations and sources expand on demand",
+    "the 390px summary exposes both nominal result and benchmark difference without horizontal page overflow",
+    "win or shortfall describes only the stated monetary alternative"
   ]
 }

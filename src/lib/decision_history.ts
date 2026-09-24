@@ -57,7 +57,39 @@ export interface DecisionHistoryOverview {
   note: string;
 }
 
+export interface DecisionHistoryResult {
+  lastPostingDate?: string;
+  asOf: string;
+  invested: number;
+  withdrawn: number;
+  currentValue: number;
+  netResult: number;
+  fees: number;
+  taxes: number;
+  taxRefund: number;
+  benchmarkRate: number;
+  benchmarkValue: number;
+  actualComparableValue: number;
+  difference: number;
+  payoutCarry: number;
+  coverage: string;
+  method: string;
+  fxEffect?: number;
+  conversionCost?: number;
+  segments?: { label: string; invested: number; netResult: number; difference: number }[];
+  details: {
+    date: string;
+    label: string;
+    amount: number;
+    source: string;
+    quantity?: number;
+    currency?: string;
+    rate?: number;
+  }[];
+}
+
 export interface DecisionHistoryCase {
+  result?: DecisionHistoryResult;
   id: string;
   title: string;
   period: string;
@@ -252,6 +284,28 @@ export const syntheticDecisionHistory: PrivateDecisionHistoryPayload = {
     }
   ]
 };
+
+syntheticDecisionHistory.cases.forEach((item, index) => {
+  const difference = [2400, -1800, -3200, 4100][index];
+  item.result = {
+    asOf: "2025-12-31",
+    invested: 100000,
+    withdrawn: 5000,
+    currentValue: 103000 + difference,
+    netResult: 8000 + difference,
+    fees: 200,
+    taxes: 300,
+    taxRefund: 0,
+    benchmarkRate: 9,
+    benchmarkValue: 108200,
+    actualComparableValue: 108200 + difference,
+    difference,
+    payoutCarry: 200,
+    coverage: "Иллюстративный расчёт",
+    method: "Синтетические суммы. Одинаковые даты вложений и ставка сравнения.",
+    details: [{ date: "2025-01-01", label: "Взнос", amount: 100000, source: "SYN-001" }]
+  };
+});
 
 export const privateDecisionHistoryAdapter = {
   async load(fetcher: typeof fetch): Promise<DecisionHistoryLoadResult> {
