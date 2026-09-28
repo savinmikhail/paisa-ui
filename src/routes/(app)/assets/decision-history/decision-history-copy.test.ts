@@ -22,4 +22,20 @@ describe("decision history page copy contract", () => {
     assert.match(pageSource, /Проверьте подключение и повторите попытку/);
     assert.match(pageSource, /Повторить загрузку/);
   });
+
+  test("shows stoozing earnings and credit interest as separate facts", () => {
+    assert.match(pageSource, /Заработано/);
+    assert.match(pageSource, /Проценты банку/);
+    assert.match(pageSource, /Средний покрытый долг/);
+    assert.match(pageSource, /Platinum и Drive/);
+    assert.match(pageSource, /Незавершённый\s+период не прогнозируется/);
+  });
+
+  test("shows Bybit yield period, working principal and simple APR", () => {
+    assert.match(pageSource, /Что дал Bybit/);
+    assert.match(pageSource, /Средняя сумма в работе/);
+    assert.match(pageSource, /Максимум в работе/);
+    assert.match(pageSource, /простой годовой эквивалент/i);
+    assert.match(pageSource, /фактическому времени каждой подписки и погашения/);
+  });
 });

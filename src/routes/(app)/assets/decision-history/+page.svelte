@@ -18,6 +18,8 @@
   const signed = (n: number) => `${n > 0 ? "+" : ""}${rub(n)}`;
   const number = (n: number) =>
     new Intl.NumberFormat("ru-RU", { maximumFractionDigits: 2 }).format(n);
+  const usdt = (n: number) => `${number(n)} USDT`;
+  const percent = (n: number) => `${number(n)}%`;
   const tone = (n: number) => (n > 0 ? "gain" : n < 0 ? "loss" : "");
   const when = (s: string) => new Intl.DateTimeFormat("ru-RU").format(new Date(`${s}T12:00:00`));
   onMount(async () => {
@@ -46,7 +48,7 @@
 <section class="section decision-history-page">
   <div class="container is-fluid">
     <h1 class="title is-3">История решений</h1>
-    <p class="intro">Сколько принесли решения и обогнали ли они накопительный счёт.</p>
+    <p class="intro">Сколько принесли решения, чем обошлись и обогнали ли они альтернативу.</p>
     {#if loadState === "loading"}
       <p role="status" data-testid="decision-history-loading">Загрузка истории решений…</p>
     {:else if loadState === "unavailable"}
@@ -63,14 +65,14 @@
         {#if decisionCases.some((c) => c.result)}
           <div class="summary-wrap">
             <table class="results-summary">
-              <caption
-                >Результаты в рублях. Прибыль решения и преимущество перед альтернативой — разные
-                показатели.</caption
-              >
+              <caption>
+                Результаты в рублях. Чистый итог, преимущество перед альтернативой и прямые потери —
+                разные показатели.
+              </caption>
               <thead
                 ><tr
                   ><th scope="col">Решение</th><th scope="col">Принесло</th><th scope="col"
-                    >Против накопительного</th
+                    >Сравнение / потери</th
                   ></tr
                 ></thead
               >
@@ -84,11 +86,25 @@
                         ></th
                       >
                       <td class={tone(item.result.netResult)}>{signed(item.result.netResult)}</td>
-                      <td class={tone(item.result.difference)}
-                        ><strong class={tone(item.result.difference)}
-                          >{signed(item.result.difference)}</strong
-                        ><small>при {item.result.benchmarkRate}% годовых</small></td
-                      >
+                      {#if item.result.creditInterest !== undefined}
+                        <td class={tone(-item.result.creditInterest)}>
+                          <strong class={tone(-item.result.creditInterest)}
+                            >{signed(-item.result.creditInterest)}</strong
+                          ><small>процентов банку</small>
+                        </td>
+                      {:else if item.result.annualRatePercent !== undefined}
+                        <td class="gain">
+                          <strong>{percent(item.result.annualRatePercent)}</strong
+                          ><small>простой годовой эквивалент</small>
+                        </td>
+                      {:else}
+                        <td class={tone(item.result.difference)}
+                          ><strong class={tone(item.result.difference)}
+                            >{signed(item.result.difference)}</strong
+                          ><small>к накопительному при {item.result.benchmarkRate}% годовых</small
+                          ></td
+                        >
+                      {/if}
                     </tr>
                   {/if}
                 {/each}
@@ -110,131 +126,249 @@
             {#if item.result}
               {@const r = item.result}
               <div class="verdict">
-                <h3 class={tone(r.difference)}>
-                  Разница на дату оценки: {signed(r.difference)} относительно счёта под
-                  {r.benchmarkRate}%
-                </h3>
-                <p>
-                  Само решение принесло <strong class={tone(r.netResult)}
-                    >{signed(r.netResult)}</strong
-                  >
-                  после учтённых издержек. Оценка на {when(r.asOf)}.
-                </p>
+                {#if r.earnRewardUsdt !== undefined && r.annualRatePercent !== undefined}
+                  <h3 class={tone(r.netResult)}>Начислено: {usdt(r.earnRewardUsdt)}</h3>
+                  <p>
+                    Рублёвый эквивалент <strong class={tone(r.netResult)}>{signed(r.netResult)}</strong
+                    >, простой годовой эквивалент
+                    <strong>{percent(r.annualRatePercent)}</strong>.
+                  </p>
+                {:else if r.grossBenefit !== undefined && r.creditInterest !== undefined}
+                  <h3 class={tone(r.netResult)}>Чистый результат: {signed(r.netResult)}</h3>
+                  <p>
+                    Заработано <strong class={tone(r.grossBenefit)}>{signed(r.grossBenefit)}</strong
+                    >, потеряно на процентах банку
+                    <strong class={tone(-r.creditInterest)}>{signed(-r.creditInterest)}</strong>.
+                    Оценка на {when(r.asOf)}.
+                  </p>
+                {:else}
+                  <h3 class={tone(r.difference)}>
+                    Разница на дату оценки: {signed(r.difference)} относительно счёта под
+                    {r.benchmarkRate}%
+                  </h3>
+                  <p>
+                    Само решение принесло <strong class={tone(r.netResult)}
+                      >{signed(r.netResult)}</strong
+                    >
+                    после учтённых издержек. Оценка на {when(r.asOf)}.
+                  </p>
+                {/if}
                 <p class="coverage">{r.coverage}</p>
                 {#if r.lastPostingDate}<p class="detail-note">
-                    Последняя операция в данных: {when(r.lastPostingDate)}. Оценка остатка по ценам
-                    на {when(r.asOf)}.
+                    Последняя операция в расчёте: {when(r.lastPostingDate)}. Дата отчёта:
+                    {when(r.asOf)}.
                   </p>{/if}
               </div>
-              <div class="result-layout">
-                <div>
-                  <h3>Из чего сложился результат</h3>
-                  <dl class="reconciliation">
-                    <div>
-                      <dt>Вложено / исходная стоимость</dt>
-                      <dd>{rub(r.invested)}</dd>
-                    </div>
-                    <div>
-                      <dt>Осталось по рыночной оценке</dt>
-                      <dd>{rub(r.currentValue)}</dd>
-                    </div>
-                    <div>
-                      <dt>Выплачено / использовано</dt>
-                      <dd>{rub(r.withdrawn)}</dd>
-                    </div>
-                    <div class="total">
-                      <dt>Остаток + выплаты − вложения</dt>
-                      <dd class={tone(r.netResult)}>{signed(r.netResult)}</dd>
-                    </div>
-                  </dl>
-                  <p class="detail-note">
-                    Комиссии: {rub(r.fees)}. Удержанный налог: {rub(r.taxes)}.{#if r.taxRefund}
-                      Налоговый возврат: {rub(r.taxRefund)}.{/if} Эти суммы уже учтены в итоге.
-                  </p>
-                  {#if r.bondCoupons !== undefined && r.bondPriceAndRedemption !== undefined}
-                    <dl class="reconciliation attribution">
+              {#if r.earnRewardUsdt !== undefined && r.annualRatePercent !== undefined}
+                <div class="result-layout">
+                  <div>
+                    <h3>Что дал Bybit</h3>
+                    <dl class="reconciliation">
                       <div>
-                        <dt>Полученные купоны</dt>
-                        <dd class={tone(r.bondCoupons)}>{signed(r.bondCoupons)}</dd>
+                        <dt>Начислено</dt>
+                        <dd class="gain">{usdt(r.earnRewardUsdt)}</dd>
                       </div>
                       <div>
-                        <dt>Стоимость остатка и погашения минус затраты</dt>
-                        <dd class={tone(r.bondPriceAndRedemption)}>
-                          {signed(r.bondPriceAndRedemption)}
-                        </dd>
+                        <dt>В рублях на дату закрытия</dt>
+                        <dd class={tone(r.netResult)}>{signed(r.netResult)}</dd>
+                      </div>
+                      <div>
+                        <dt>Выплат</dt>
+                        <dd>{r.earnCredits ?? 0}</dd>
+                      </div>
+                      <div class="total">
+                        <dt>Простой годовой эквивалент</dt>
+                        <dd class="gain">{percent(r.annualRatePercent)}</dd>
+                      </div>
+                    </dl>
+                  </div>
+                  <div>
+                    <h3>С какой суммы</h3>
+                    <dl class="reconciliation">
+                      <div>
+                        <dt>Средняя сумма в работе</dt>
+                        <dd>{usdt(r.averagePrincipalUsdt ?? 0)}</dd>
+                      </div>
+                      <div>
+                        <dt>Максимум в работе</dt>
+                        <dd>{usdt(r.peakPrincipalUsdt ?? 0)}</dd>
+                      </div>
+                      <div>
+                        <dt>Сумма × время</dt>
+                        <dd>{number(r.capitalDaysUsdt ?? 0)} USDT-дней</dd>
+                      </div>
+                      <div>
+                        <dt>Тело возвращено</dt>
+                        <dd>{when(r.lastRedemptionDate ?? r.lastPostingDate ?? r.asOf)}</dd>
                       </div>
                     </dl>
                     <p class="detail-note">
-                      Это результат на дату оценки. Доходность к погашению предполагает будущие
-                      выплаты и удержание бумаги до соответствующей даты; текущая цена может
-                      временно уменьшить результат.
+                      APR рассчитан по фактическому времени каждой подписки и погашения, без
+                      предположения о реинвестировании и без курсового результата тела.
                     </p>
-                  {/if}
-                  {#if r.fxEffect !== undefined && r.conversionCost !== undefined}
-                    <dl class="reconciliation attribution">
+                  </div>
+                </div>
+              {:else if r.savingsInterest !== undefined && r.grossBenefit !== undefined && r.creditInterest !== undefined}
+                <div class="result-layout">
+                  <div>
+                    <h3>Из чего сложился результат</h3>
+                    <dl class="reconciliation">
                       <div>
-                        <dt>Изменение курса относительно опорного на дату покупки</dt>
-                        <dd class={tone(r.fxEffect)}>{signed(r.fxEffect)}</dd>
+                        <dt>Проценты на покрытую часть долга</dt>
+                        <dd class={tone(r.savingsInterest)}>{signed(r.savingsInterest)}</dd>
                       </div>
                       <div>
-                        <dt>Разница фактического курса покупки с опорным</dt>
-                        <dd class={tone(-r.conversionCost)}>{signed(-r.conversionCost)}</dd>
+                        <dt>Проценты банку</dt>
+                        <dd class={tone(-r.creditInterest)}>{signed(-r.creditInterest)}</dd>
+                      </div>
+                      <div class="total">
+                        <dt>Чистый результат</dt>
+                        <dd class={tone(r.netResult)}>{signed(r.netResult)}</dd>
                       </div>
                     </dl>
                     <p class="detail-note">
-                      Для USD опорный курс — официальный курс ЦБ на дату покупки; для USDT —
-                      датированная учётная котировка. Разница включает спред и другие затраты
-                      маршрута, уже входит в итог и повторно не вычитается.
+                      Заработано до потерь: {rub(r.grossBenefit)}. Комиссии и обслуживание кредитных
+                      карт не смешиваются с процентами и в эту строку не входят.
                     </p>
-                  {/if}
+                  </div>
+                  <div>
+                    <h3>Какой объём работал</h3>
+                    <dl class="reconciliation">
+                      <div>
+                        <dt>Средний покрытый долг</dt>
+                        <dd>{rub(r.averageCoveredBalance ?? 0)}</dd>
+                      </div>
+                      <div>
+                        <dt>Завершённых начислений</dt>
+                        <dd>{r.interestCredits ?? 0}</dd>
+                      </div>
+                      <div>
+                        <dt>Списаний процентов</dt>
+                        <dd>{r.interestCharges ?? 0}</dd>
+                      </div>
+                      <div>
+                        <dt>Все проценты по остаткам</dt>
+                        <dd>{rub(r.totalSavingsInterest ?? 0)}</dd>
+                      </div>
+                    </dl>
+                    <p class="detail-note">
+                      В доход стузинга попала не вся сумма процентов, а только доля ежедневных
+                      процентных остатков, покрытая суммарным долгом Platinum и Drive. Незавершённый
+                      период не прогнозируется.
+                    </p>
+                  </div>
                 </div>
-                <div class="comparison">
-                  <h3>Если бы деньги лежали на счёте</h3>
-                  <div class="comparison-row">
-                    <span>Решение, к дате оценки</span><strong
-                      >{rub(r.actualComparableValue)}</strong
-                    >
+              {:else}
+                <div class="result-layout">
+                  <div>
+                    <h3>Из чего сложился результат</h3>
+                    <dl class="reconciliation">
+                      <div>
+                        <dt>Вложено / исходная стоимость</dt>
+                        <dd>{rub(r.invested)}</dd>
+                      </div>
+                      <div>
+                        <dt>Осталось по рыночной оценке</dt>
+                        <dd>{rub(r.currentValue)}</dd>
+                      </div>
+                      <div>
+                        <dt>Выплачено / использовано</dt>
+                        <dd>{rub(r.withdrawn)}</dd>
+                      </div>
+                      <div class="total">
+                        <dt>Остаток + выплаты − вложения</dt>
+                        <dd class={tone(r.netResult)}>{signed(r.netResult)}</dd>
+                      </div>
+                    </dl>
+                    <p class="detail-note">
+                      Комиссии: {rub(r.fees)}. Удержанный налог: {rub(r.taxes)}.{#if r.taxRefund}
+                        Налоговый возврат: {rub(r.taxRefund)}.{/if} Эти суммы уже учтены в итоге.
+                    </p>
+                    {#if r.bondCoupons !== undefined && r.bondPriceAndRedemption !== undefined}
+                      <dl class="reconciliation attribution">
+                        <div>
+                          <dt>Полученные купоны</dt>
+                          <dd class={tone(r.bondCoupons)}>{signed(r.bondCoupons)}</dd>
+                        </div>
+                        <div>
+                          <dt>Стоимость остатка и погашения минус затраты</dt>
+                          <dd class={tone(r.bondPriceAndRedemption)}>
+                            {signed(r.bondPriceAndRedemption)}
+                          </dd>
+                        </div>
+                      </dl>
+                      <p class="detail-note">
+                        Это результат на дату оценки. Доходность к погашению предполагает будущие
+                        выплаты и удержание бумаги до соответствующей даты; текущая цена может
+                        временно уменьшить результат.
+                      </p>
+                    {/if}
+                    {#if r.fxEffect !== undefined && r.conversionCost !== undefined}
+                      <dl class="reconciliation attribution">
+                        <div>
+                          <dt>Изменение курса относительно опорного на дату покупки</dt>
+                          <dd class={tone(r.fxEffect)}>{signed(r.fxEffect)}</dd>
+                        </div>
+                        <div>
+                          <dt>Разница фактического курса покупки с опорным</dt>
+                          <dd class={tone(-r.conversionCost)}>{signed(-r.conversionCost)}</dd>
+                        </div>
+                      </dl>
+                      <p class="detail-note">
+                        Для USD опорный курс — официальный курс ЦБ на дату покупки; для USDT —
+                        датированная учётная котировка. Разница включает спред и другие затраты
+                        маршрута, уже входит в итог и повторно не вычитается.
+                      </p>
+                    {/if}
                   </div>
-                  <div class="bar-track">
-                    <div
-                      class="bar actual"
-                      style={`width:${Math.max(
-                        0,
-                        (r.actualComparableValue /
-                          Math.max(r.actualComparableValue, r.benchmarkValue, 1)) *
-                          100
-                      )}%`}
-                    ></div>
+                  <div class="comparison">
+                    <h3>Если бы деньги лежали на счёте</h3>
+                    <div class="comparison-row">
+                      <span>Решение, к дате оценки</span><strong
+                        >{rub(r.actualComparableValue)}</strong
+                      >
+                    </div>
+                    <div class="bar-track">
+                      <div
+                        class="bar actual"
+                        style={`width:${Math.max(
+                          0,
+                          (r.actualComparableValue /
+                            Math.max(r.actualComparableValue, r.benchmarkValue, 1)) *
+                            100
+                        )}%`}
+                      ></div>
+                    </div>
+                    <div class="comparison-row">
+                      <span>Накопительный счёт · {r.benchmarkRate}%</span><strong
+                        >{rub(r.benchmarkValue)}</strong
+                      >
+                    </div>
+                    <div class="bar-track">
+                      <div
+                        class="bar alternative"
+                        style={`width:${Math.max(
+                          0,
+                          (r.benchmarkValue /
+                            Math.max(r.actualComparableValue, r.benchmarkValue, 1)) *
+                            100
+                        )}%`}
+                      ></div>
+                    </div>
+                    <p class="comparison-difference">
+                      Разница <strong class={tone(r.difference)}>{signed(r.difference)}</strong>
+                    </p>
+                    <p class="detail-note">
+                      Выплаты доведены до даты оценки по той же ставке: {rub(r.payoutCarry)} расчётных
+                      процентов. Поэтому сравнимая стоимость отличается от остатка плюс выплаты.
+                    </p>
+                    <p class="detail-note">
+                      Ставка постоянна во всём сценарии. Альтернатива до индивидуального налога на
+                      проценты; результат решения после фактических удержаний.
+                    </p>
                   </div>
-                  <div class="comparison-row">
-                    <span>Накопительный счёт · {r.benchmarkRate}%</span><strong
-                      >{rub(r.benchmarkValue)}</strong
-                    >
-                  </div>
-                  <div class="bar-track">
-                    <div
-                      class="bar alternative"
-                      style={`width:${Math.max(
-                        0,
-                        (r.benchmarkValue /
-                          Math.max(r.actualComparableValue, r.benchmarkValue, 1)) *
-                          100
-                      )}%`}
-                    ></div>
-                  </div>
-                  <p class="comparison-difference">
-                    Разница <strong class={tone(r.difference)}>{signed(r.difference)}</strong>
-                  </p>
-                  <p class="detail-note">
-                    Выплаты доведены до даты оценки по той же ставке: {rub(r.payoutCarry)} расчётных
-                    процентов. Поэтому сравнимая стоимость отличается от остатка плюс выплаты.
-                  </p>
-                  <p class="detail-note">
-                    Ставка постоянна во всём сценарии. Альтернатива до индивидуального налога на
-                    проценты; результат решения после фактических удержаний.
-                  </p>
                 </div>
-              </div>
+              {/if}
               {#if r.segments?.length}
                 <div class="table-wrap">
                   <table class="flow-table">
@@ -313,7 +447,9 @@
                       {#each r.details as row}<tr
                           ><td>{when(row.date)}</td><td>{row.label}<small>{row.source}</small></td
                           ><td>{rub(row.amount)}</td><td
-                            >{#if row.quantity !== undefined}{number(row.quantity)}
+                            >{#if row.credited !== undefined}Всего начислено<small
+                                >{rub(row.credited)}</small
+                              >{:else if row.quantity !== undefined}{number(row.quantity)}
                               {row.currency}<small>{number(row.rate ?? 0)} RUB/{row.currency}</small
                               >{:else}—{/if}</td
                           ></tr
@@ -641,7 +777,7 @@
       content: "Принесло";
     }
     .results-summary tbody td:nth-child(3)::before {
-      content: "К альтернативе";
+      content: "Сравнение / потери";
     }
     header h2 {
       font-size: 1.3rem;

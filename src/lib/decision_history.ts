@@ -78,6 +78,24 @@ export interface DecisionHistoryResult {
   conversionCost?: number;
   bondCoupons?: number;
   bondPriceAndRedemption?: number;
+  savingsInterest?: number;
+  grossBenefit?: number;
+  creditInterest?: number;
+  totalSavingsInterest?: number;
+  averageCoveredBalance?: number;
+  coveredBalanceDays?: number;
+  interestCredits?: number;
+  interestCharges?: number;
+  earnRewardUsdt?: number;
+  averagePrincipalUsdt?: number;
+  peakPrincipalUsdt?: number;
+  capitalDaysUsdt?: number;
+  annualRatePercent?: number;
+  earnCredits?: number;
+  valuationUsdtRub?: number;
+  exposureDays?: number;
+  firstPlacementDate?: string;
+  lastRedemptionDate?: string;
   fundingRoutes?: {
     route: string;
     receipts: number;
@@ -99,6 +117,9 @@ export interface DecisionHistoryResult {
     quantity?: number;
     currency?: string;
     rate?: number;
+    credited?: number;
+    usdtEquivalent?: number;
+    creditCount?: number;
   }[];
 }
 
