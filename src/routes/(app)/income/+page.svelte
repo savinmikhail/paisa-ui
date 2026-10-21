@@ -46,10 +46,13 @@
       tax_timeline: taxes,
       yearly_cards: yearlyCards
     } = await ajax("/api/income");
-    const analysis = await ajax("/api/income/analysis");
+    const [analysis, { cash_flows: cashFlows }] = await Promise.all([
+      ajax("/api/income/analysis"),
+      ajax("/api/cash_flow")
+    ]);
     passiveIncome = analysis.passive_income;
     await tick();
-    monthlyInvestmentTimelineLegends = renderMonthlyInvestmentTimeline(incomes);
+    monthlyInvestmentTimelineLegends = renderMonthlyInvestmentTimeline(incomes, cashFlows);
     yearlyIncomeTimelineLegends = renderYearlyIncomeTimeline(yearlyCards);
     yearlyNetIncomeTimelineLegends = renderYearlyTimelineOf(
       "Net Income",
@@ -88,7 +91,9 @@
         </div>
       </div>
     </div>
-    <BoxLabel text="Monthly Income Timeline" />
+    <BoxLabel
+      text="Monthly Income Timeline · Savings rate: values outside −100%…100% appear at the edge; hover for exact values"
+    />
   </div>
 </section>
 {#if passiveIncome}

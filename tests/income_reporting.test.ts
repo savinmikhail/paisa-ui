@@ -46,3 +46,10 @@ test("legend filtering changes the median input, while passive fixture keeps FX 
     false
   );
 });
+
+import { savingsRate } from "../src/lib/income_reporting";
+test("savings rate includes taxes and preserves deficits without counting capital placement", () => {
+  assert.equal(savingsRate({ income: 100, expenses: 50, tax: 10 }), 0.4);
+  assert.equal(savingsRate({ income: 100, expenses: 120, tax: 10 }), -0.3);
+  assert.equal(savingsRate({ income: 0, expenses: 50, tax: 0 }), null);
+});

@@ -4,6 +4,8 @@ import _ from "lodash";
 import COLORS, { generateColorScheme } from "./colors";
 import {
   formatCurrency,
+  formatPercentage,
+  type CashFlow,
   formatCurrencyCrude,
   type Income,
   type Posting,
@@ -16,20 +18,28 @@ import {
   type PassiveIncomeAnalysis
 } from "./utils";
 import { incomeTimelineDomain } from "./income_scale";
-import { incomeGroup, rollingMedian, selectedIncomeTotals } from "./income_reporting";
+import { incomeGroup, rollingMedian, selectedIncomeTotals, savingsRate } from "./income_reporting";
 
 export { incomeGroup } from "./income_reporting";
 
 export { incomeTimelineDomain } from "./income_scale";
 
-export function renderMonthlyInvestmentTimeline(incomes: Income[]): Legend[] {
-  return renderIncomeTimeline(incomes, "#d3-income-timeline", "MMM-YYYY");
+export function renderMonthlyInvestmentTimeline(
+  incomes: Income[],
+  cashFlows: CashFlow[] = []
+): Legend[] {
+  return renderIncomeTimeline(incomes, "#d3-income-timeline", "MMM-YYYY", cashFlows);
 }
 
-function renderIncomeTimeline(incomes: Income[], id: string, timeFormat: string): Legend[] {
+function renderIncomeTimeline(
+  incomes: Income[],
+  id: string,
+  timeFormat: string,
+  cashFlows: CashFlow[]
+): Legend[] {
   const MAX_BAR_WIDTH = 40;
   const svg = d3.select(id),
-    margin = { top: 20, right: 30, bottom: 80, left: 40 },
+    margin = { top: 20, right: 65, bottom: 80, left: 40 },
     width =
       document.getElementById(id.substring(1)).parentElement.clientWidth -
       margin.left -
@@ -83,7 +93,12 @@ function renderIncomeTimeline(incomes: Income[], id: string, timeFormat: string)
     );
   });
 
-  const x = d3.scaleBand().range([0, width]).paddingInner(0.1).paddingOuter(0);
+  const x = d3
+    .scaleBand()
+    .domain(points.map((p) => p.month))
+    .range([0, width])
+    .paddingInner(0.1)
+    .paddingOuter(0);
   const y = d3.scaleLinear().range([height, 0]);
   const z = generateColorScheme(groupKeys);
 
@@ -97,6 +112,69 @@ function renderIncomeTimeline(incomes: Income[], id: string, timeFormat: string)
     .attr("stroke-width", 2)
     .attr("stroke-dasharray", "7,5");
   const medianHitTargets = g.append("g").attr("class", "median-hit-targets");
+  const rates = new Map(cashFlows.map((flow) => [flow.date.format("YYYY-MM"), savingsRate(flow)]));
+  const monthlyRates = points.map((point) => rates.get(point.date.format("YYYY-MM")) ?? null);
+  const smoothedRates = monthlyRates.map((_rate, index) => {
+    const window = monthlyRates.slice(Math.max(0, index - 3), index + 1);
+    if (window.length < 4 || window.some((value) => value === null)) return null;
+    return rollingMedian(window as number[], 4)[3];
+  });
+  const ratePoints = points.map((point, index) => ({
+    month: point.month,
+    rate: smoothedRates[index]
+  }));
+  const rateScale = d3.scaleLinear().domain([-1, 1]).clamp(true).range([height, 0]);
+  const rateAxis = g
+    .append("g")
+    .attr("class", "axis savings-rate-axis")
+    .attr("transform", `translate(${width},0)`);
+  rateAxis.call(
+    d3
+      .axisRight(rateScale)
+      .ticks(6)
+      .tickFormat((value) => formatPercentage(+value))
+  );
+  const rateLayer = g.append("g").attr("class", "savings-rate");
+  rateLayer
+    .append("path")
+    .datum(ratePoints)
+    .attr("fill", "none")
+    .attr("stroke", COLORS.primary)
+    .attr("stroke-width", 2)
+    .attr("stroke-dasharray", "7,5")
+    .attr(
+      "d",
+      d3
+        .line<{ month: string; rate: number | null }>()
+        .defined((point) => point.rate !== null)
+        .x((point) => {
+          return x(point.month) + x.bandwidth() / 2;
+        })
+        .y((point) => rateScale(point.rate as number))
+    );
+  rateLayer
+    .selectAll("circle")
+    .data(ratePoints.filter((point) => point.rate !== null))
+    .join("circle")
+    .attr("cx", (point) => x(point.month) + x.bandwidth() / 2)
+    .attr("cy", (point) => rateScale(point.rate as number))
+    .attr("r", 10)
+    .attr("fill", "transparent")
+    .attr("tabindex", 0)
+    .attr("role", "img")
+    .attr(
+      "aria-label",
+      (point) =>
+        `${point.month}: Savings rate · 4-month median ${formatPercentage(point.rate as number, 1)}`
+    )
+    .attr(
+      "data-tippy-content",
+      (point) =>
+        `${point.month}: Savings rate · 4-month median ${formatPercentage(
+          point.rate as number,
+          1
+        )}${point.month === dayjs().format(timeFormat) ? " (month to date)" : ""}`
+    );
 
   const tooltipContent = (visibleGroups: string[]) => (d: any) => {
     const postings = _.filter((d.data as unknown as { postings: Posting[] }).postings, (posting) =>
@@ -249,6 +327,17 @@ function renderIncomeTimeline(incomes: Income[], id: string, timeFormat: string)
     }
   });
 
+  legends.push({
+    label: "Savings rate · 4-month median · right axis (%)",
+    color: COLORS.primary,
+    shape: "line",
+    toggle: true,
+    selected: true,
+    onClick: (legend: Legend) => {
+      rateLayer.attr("display", legend.selected ? null : "none");
+      rateAxis.attr("display", legend.selected ? null : "none");
+    }
+  });
   render(groupKeys);
 
   return legends;

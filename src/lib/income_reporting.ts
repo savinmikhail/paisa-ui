@@ -36,3 +36,12 @@ export function rollingMedian(values: number[], windowSize = 4): Array<number | 
     return window[middle];
   });
 }
+
+// Cash Flow reports tax separately from other recognized expenses.
+export function savingsRate(flow: {
+  income: number;
+  expenses: number;
+  tax: number;
+}): number | null {
+  return flow.income > 0 ? (flow.income - flow.expenses - flow.tax) / flow.income : null;
+}
