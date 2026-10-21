@@ -23,7 +23,7 @@ export const load = (async ({ url }) => {
     return {};
   }
 
-  const { config, now } = await ajax("/api/config");
+  const { config, now } = await ajax("/api/config", { background: true });
   if (now) {
     setNow(now);
   }

@@ -682,7 +682,8 @@ export type RequestOptions = RequestInit & {
 };
 
 export function ajax(
-  route: "/api/config"
+  route: "/api/config",
+  options?: RequestOptions & { method?: "GET" }
 ): Promise<{ config: UserConfig; schema: JSONSchema7; now: dayjs.Dayjs; accounts: string[] }>;
 export function ajax(
   route: "/api/exposure" | "/api/exposure?source=synthetic"
