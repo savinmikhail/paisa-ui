@@ -133,9 +133,6 @@
 
 <section class="section tab-expense">
   <div class="container is-fluid">
-    {#if retrospective}
-      <ExpenseRetrospectiveView data={retrospective} />
-    {/if}
     <div class="columns is-flex-wrap-wrap">
       <div class="column is-3">
         <div class="columns is-flex-wrap-wrap">
@@ -222,5 +219,8 @@
         <BoxLabel text="Monthly Expenses" />
       </div>
     </div>
+    {#if retrospective}
+      <ExpenseRetrospectiveView data={retrospective} />
+    {/if}
   </div>
 </section>
