@@ -9,7 +9,6 @@ import {
   formatCurrencyCrude,
   type Income,
   type Posting,
-  restName,
   secondName,
   skipTicks,
   tooltip,
@@ -177,20 +176,16 @@ function renderIncomeTimeline(
     );
 
   const tooltipContent = (visibleGroups: string[]) => (d: any) => {
-    const postings = _.filter((d.data as unknown as { postings: Posting[] }).postings, (posting) =>
-      visibleGroups.includes(incomeGroup(posting))
-    );
-    const total = _.sumBy(postings, (p) => -p.amount);
+    const point = d.data as Point & { postings: Posting[] };
+    const monthGroups = new Set(point.postings.map(incomeGroup));
+    const groups = visibleGroups.filter((group) => monthGroups.has(group));
 
     return tooltip(
-      _.sortBy(
-        postings.map((p) => [
-          restName(p.account),
-          [formatCurrency(-p.amount), "has-text-weight-bold has-text-right"]
-        ]),
-        (r) => r[0]
-      ),
-      { total: formatCurrency(total) }
+      groups.map((group) => [
+        group,
+        [formatCurrency(point[group] as number), "has-text-weight-bold has-text-right"]
+      ]),
+      { total: formatCurrency(_.sumBy(groups, (group) => point[group] as number)) }
     );
   };
 
