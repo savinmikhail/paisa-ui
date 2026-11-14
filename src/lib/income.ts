@@ -178,7 +178,11 @@ function renderIncomeTimeline(
   const tooltipContent = (visibleGroups: string[]) => (d: any) => {
     const point = d.data as Point & { postings: Posting[] };
     const monthGroups = new Set(point.postings.map(incomeGroup));
-    const groups = visibleGroups.filter((group) => monthGroups.has(group));
+    const groups = _.orderBy(
+      visibleGroups.filter((group) => monthGroups.has(group)),
+      (group) => point[group] as number,
+      "desc"
+    );
 
     return tooltip(
       groups.map((group) => [
