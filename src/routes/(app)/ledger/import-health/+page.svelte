@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount } from "svelte";
+  import { ajax } from "$lib/utils";
 
   type Account = { account: string; last_operation: string; confirmed_through: string | null };
   type Service = { service: string; last_success: string | null };
@@ -34,9 +35,9 @@
     loading = true;
     failed = false;
     try {
-      const response = await fetch("/api/import_health", { cache: "no-store" });
-      if (!response.ok) throw new Error("Import health unavailable");
-      report = await response.json();
+      const result = await ajax("/api/import_health", { background: true });
+      if (!("generated_at" in result)) throw new Error("Import health unavailable");
+      report = result;
     } catch {
       failed = true;
     } finally {
