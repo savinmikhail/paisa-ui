@@ -2,7 +2,7 @@
   import { onMount } from "svelte";
   import { ajax } from "$lib/utils";
 
-  type Account = { account: string; last_operation: string; confirmed_through: string | null };
+  type Account = { account: string; last_operation: string; confirmed_through: string | null; imported_at?: string | null; last_sync?: string | null };
   type Service = { service: string; last_success: string | null };
   type Report = { generated_at: string; accounts: Account[]; services: Service[]; statements?: { bank: string; period_end: string; imported_at: string }[] | null; issues: { id: string }[] };
 
@@ -47,7 +47,8 @@
 
   $: accounts = (report?.accounts ?? [])
     .filter(({ account }) => account.toLowerCase().includes(search.trim().toLowerCase()))
-    .sort((a, b) => (a.confirmed_through ?? a.last_operation).localeCompare(b.confirmed_through ?? b.last_operation));
+    .sort((a, b) => Number(b.account.startsWith("Assets:Checking:")) - Number(a.account.startsWith("Assets:Checking:"))
+      || a.account.localeCompare(b.account));
   $: issues = new Set(report?.issues.map(({ id }) => id));
 
   onMount(() => { void load(); });
@@ -80,27 +81,8 @@
           </tbody>
         </table>
       </div>
-      <h2 class="title is-5">Импортированные выписки</h2>
-      {#if report.statements?.length}
-        <div class="table-container mb-5">
-          <table class="table is-fullwidth">
-            <thead><tr><th>Банк</th><th>Импортировано по</th><th>Загружено</th></tr></thead>
-            <tbody>
-              {#each report.statements as statement (statement.bank)}
-                <tr>
-                  <th scope="row">{statement.bank}</th>
-                  <td>{date(statement.period_end)} · {age(statement.period_end)} дн. назад</td>
-                  <td>{date(statement.imported_at)}</td>
-                </tr>
-              {/each}
-            </tbody>
-          </table>
-        </div>
-      {:else}
-        <p class="mb-5">В отчёте пока нет данных о периодах выписок.</p>
-      {/if}
-      <h2 class="title is-5">Покрытие по счетам</h2>
-      <p class="mb-3">Дата операции показывает последнюю запись в Ledger. Покрытие подтверждается по периоду выписки. <a href="/ledger/import">Загрузить выписку</a></p>
+      <h2 class="title is-5">Счета и активы</h2>
+      <p class="mb-3">Дата «Импортировано по» берётся из выписки. Даты загрузки и последней операции показаны отдельно. <a href="/ledger/import">Загрузить выписку</a></p>
       <label class="label" for="account-search">Найти банк или счёт</label>
       <input class="input mb-4 search" id="account-search" type="search" bind:value={search} placeholder="Например, Halyk или Bakai" />
       {#if accounts.length === 0}
@@ -108,13 +90,14 @@
       {:else}
         <div class="table-container">
           <table class="table is-fullwidth">
-            <thead><tr><th>Счёт</th><th>Последняя операция</th><th>Выписка проверена по</th><th>Действие</th></tr></thead>
+            <thead><tr><th>Счёт</th><th>Последняя операция</th><th>Импортировано по</th><th>Загрузка или синхронизация</th><th>Действие</th></tr></thead>
             <tbody>
               {#each accounts as account (account.account)}
                 <tr>
                   <th scope="row">{account.account.replace(/:/g, " / ")}</th>
                   <td>{date(account.last_operation)} · {age(account.last_operation)} дн. назад</td>
                   <td>{account.confirmed_through ? `${date(account.confirmed_through)} · ${age(account.confirmed_through)} дн. назад` : "Не подтверждено"}</td>
+                  <td>{account.last_sync ? date(account.last_sync) + " · синхронизация" : account.imported_at ? date(account.imported_at) + " · выписка" : "Нет даты"}</td>
                   <td>{issues.has(`account:${account.account}`) ? "Проверить выписку" : "—"}</td>
                 </tr>
               {/each}

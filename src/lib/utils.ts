@@ -911,7 +911,7 @@ export function ajax(
 export function ajax(route: "/api/ping"): Promise<{ success: boolean; error?: string }>;
 export function ajax(route: "/api/exposure"): Promise<ExposureReport>;
 export function ajax(route: "/api/resilience"): Promise<ResilienceReport>;
-export function ajax(route: "/api/import_health", options?: RequestOptions): Promise<{ generated_at: string; accounts: { account: string; last_operation: string; confirmed_through: string | null }[]; services: { service: string; last_success: string | null }[]; statements?: { bank: string; period_end: string; imported_at: string }[] | null; issues: { id: string }[] } | { error: string }>;
+export function ajax(route: "/api/import_health", options?: RequestOptions): Promise<{ generated_at: string; accounts: { account: string; last_operation: string; confirmed_through: string | null; imported_at?: string | null; last_sync?: string | null }[]; services: { service: string; last_success: string | null }[]; statements?: { bank: string; period_end: string; imported_at: string }[] | null; issues: { id: string }[] } | { error: string }>;
 
 export async function ajax(
   route: string,
