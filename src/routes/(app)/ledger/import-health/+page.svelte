@@ -4,7 +4,7 @@
 
   type Account = { account: string; last_operation: string; confirmed_through: string | null };
   type Service = { service: string; last_success: string | null };
-  type Report = { generated_at: string; accounts: Account[]; services: Service[]; issues: { id: string }[] };
+  type Report = { generated_at: string; accounts: Account[]; services: Service[]; statements?: { bank: string; period_end: string; imported_at: string }[] | null; issues: { id: string }[] };
 
   const serviceNames: Record<string, string> = {
     bybit: "Bybit",
@@ -80,6 +80,25 @@
           </tbody>
         </table>
       </div>
+      <h2 class="title is-5">Импортированные выписки</h2>
+      {#if report.statements?.length}
+        <div class="table-container mb-5">
+          <table class="table is-fullwidth">
+            <thead><tr><th>Банк</th><th>Импортировано по</th><th>Загружено</th></tr></thead>
+            <tbody>
+              {#each report.statements as statement (statement.bank)}
+                <tr>
+                  <th scope="row">{statement.bank}</th>
+                  <td>{date(statement.period_end)} · {age(statement.period_end)} дн. назад</td>
+                  <td>{date(statement.imported_at)}</td>
+                </tr>
+              {/each}
+            </tbody>
+          </table>
+        </div>
+      {:else}
+        <p class="mb-5">В отчёте пока нет данных о периодах выписок.</p>
+      {/if}
       <h2 class="title is-5">Покрытие по счетам</h2>
       <p class="mb-3">Дата операции показывает последнюю запись в Ledger. Покрытие подтверждается по периоду выписки. <a href="/ledger/import">Загрузить выписку</a></p>
       <label class="label" for="account-search">Найти банк или счёт</label>

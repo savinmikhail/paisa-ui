@@ -15,6 +15,7 @@ func importHealthHandler(path string) gin.HandlerFunc {
 		var report struct {
 			GeneratedAt string            `json:"generated_at"`
 			Services    []json.RawMessage `json:"services"`
+			Statements  []json.RawMessage `json:"statements"`
 			Accounts    []json.RawMessage `json:"accounts"`
 			Issues      []struct {
 				ID string `json:"id"`
