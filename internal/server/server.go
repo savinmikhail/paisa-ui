@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 
@@ -156,6 +157,7 @@ func Build(db *gorm.DB, enableCompression bool) *gin.Engine {
 	})
 	router.GET("/api/exposure", exposureHandler())
 	router.GET("/api/decision_history", decisionHistoryHandler())
+	router.GET("/api/import_health", importHealthHandler(os.Getenv("PAISA_IMPORT_HEALTH_FILE")))
 	router.GET("/api/resilience", resilienceHandler())
 	router.GET("/api/income/analysis", func(c *gin.Context) {
 		c.JSON(200, GetIncomeAnalysis(db))

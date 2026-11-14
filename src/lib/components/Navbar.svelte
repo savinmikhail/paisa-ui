@@ -118,6 +118,7 @@
       href: "/ledger",
       children: [
         { label: "Import", href: "/import", help: "import" },
+        { label: "Состояние импорта", href: "/import-health" },
         { label: "Editor", href: "/editor", help: "editor", disablePreload: true },
         { label: "Transactions", href: "/transaction", help: "bulk-edit" },
         { label: "Postings", href: "/posting" },
